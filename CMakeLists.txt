@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
 project(LQR_hopper)
+
+
 set(USE_GL true)
+set(BLA_VENDOR OpenBLAS)
+
 
 #Mujoco paths
 set(mujoco_PATH ${CMAKE_CURRENT_SOURCE_DIR})

@@ -21,7 +21,20 @@
 find_package(glfw3 REQUIRED)
 include_directories(${glfw_INCLUDE_DIRS})
 
+find_package(Eigen3 3.3 REQUIRED)
+INCLUDE_DIRECTORIES ($ENV{EIGEN3_INCLUDE_DIR})
+message(STATUS "Eigen: " ${EIGEN3_INCLUDE_DIRS})
+#find_package(BLAS REQUIRED)
+#find_package(LAPACK)
+
+# file(GLOB LAPACK_INCLUDES /usr/lib/x86_64-linux-gnu/lapack/*)
+# file(GLOB LIB_ARMADILLO /usr/lib/x86_64-linux-gnu/libarmadillo.so)
+
+# include_directories(LQR_hopper ${LAPACK_INCLUDES})
+# include_directories(LQR_hopper ${LIB_ARMADILLO})
 
 add_executable(LQR_hopper LQR_hopper.cc)
 target_link_libraries(LQR_hopper ${LIB_MUJOCO})
 target_link_libraries(LQR_hopper glfw)
+target_link_libraries(LQR_hopper Eigen3::Eigen)
+#target_link_libraries(LQR_hopper lapack)

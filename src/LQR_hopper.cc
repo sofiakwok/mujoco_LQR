@@ -8,9 +8,12 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-#include <armadillo>
+#include <Eigen/Core>
+#include <Eigen/SVD>
+#include <Eigen/Dense>
+// #include <lapack>
 using namespace std;
-using namespace arma;
+using namespace Eigen;
 
 char filename[] = "../model/hopper/hopper_rev10_mjcf.xml";
 
@@ -34,7 +37,7 @@ mjtNum position_history = 0;
 mjtNum previous_time = 0;
 
 // controller related variables
-float_t ctrl_update_freq = 100;
+double_t ctrl_update_freq = 100;
 mjtNum last_update = 0.0;
 mjtNum ctrl;
 
@@ -103,48 +106,66 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset)
     mjv_moveCamera(m, mjMOUSE_ZOOM, 0, -0.05*yoffset, &scn, &cam);
 }
 
-vec LQR_controller(const mjModel* m, mjData* d)
+MatrixXd LQR_controller(const mjModel* m, mjData* d)
 {
     // update constants
-    float g = 9.81;
-    float mass = 1;
-    float rw_mass = 1;
-    float I_p = 2;
-    float I_rw = 2;
-    float L = 1;
-    float l = 0.75;
+    double g = 9.81;
+    double mass = 1;
+    double rw_mass = 1;
+    double I_p = 2;
+    double I_rw = 2;
+    double L = 1;
+    double l = 0.75;
 
-    float a = rw_mass*L*L + I_p; 
-    float b = mass*l + rw_mass*L;
+    double a = rw_mass*L*L + I_p; 
+    cout << "a: " << a << endl;
+    double b = mass*l + rw_mass*L;
 
-    mat A = ("0, 1, 0; b*g/a, 0, 0; -b*g/a, 0, 0");
+    Matrix<double, 3, 3> A;
+    A(0, 1) = 1;
+    A(1, 0) = b*g/a;
+    A(2, 0) = -b*g/a;
     cout << "A: " << A << endl; 
-    mat A_T = trans(A);
-    mat B = ("0; -1/a; (a + I_rw)/(a*I_rw)");
-    mat B_T = trans(B);
-    mat C = ("1, 0, 0");
-    mat C_T = trans(C);
-    mat D = ("0; 0; 0");
+    cout << "Ainv: " << A.inverse() << endl;
+    Matrix<double, 3, 3> A_T = A.transpose();
+    Matrix<double, 3, 1> B = {{0}, {-1/a}, {(a + I_rw)/(a*I_rw)}};
+    cout << "B: " << B << endl;
+    Matrix<double, 1, 3> B_T = B.transpose();
+    Matrix<double, 1, 3> C = {1.0, 0, 0};
+    Matrix<double, 3, 1> C_T = C.transpose();
+    //not used at all
+    Matrix<double, 3, 1> D = {0, 0, 0};
 
-    mat Q;
+    Matrix<double, 3, 3> Q;
     Q = C_T * C;
+    cout << "Q: " << Q << endl;
     //this is sus
-    float R = 1;
+    double R = 1;
 
-    mat A_inv_T = trans(A.i());
+    Matrix<double, 3, 3> A_inv_T = A.inverse().transpose();
+    cout << "A inv: " << A_inv_T << endl;
     //R should be inverted here
-    mat Z = join_cols(join_rows(A + B*R*B_T*A_inv_T*Q, -B*R*B_T*A_inv_T), join_rows(-A_inv_T*Q, A_inv_T));
-    Z.print();
-    mat U;
-    vec s;
-    mat V;
-    svd(U, s, V, Z);
-    cout << "U: " << U; 
+    MatrixXd Z1(3, 6); 
+    MatrixXd Z2(3, 6);
+    MatrixXd Z;
+    MatrixXd xi(3, 3);
+    xi  = A + B*R*B_T*A_inv_T*Q;
+    cout << "xi: " << xi << endl;
+    MatrixXd xi2(3, 3);
+    xi2 = -B*R*B_T*A_inv_T;
+    Z1 << xi, xi2;
+    Z2 << -A_inv_T*Q.cast<double>(), A_inv_T.cast<double>();
+    Z << Z1, Z2;
+    JacobiSVD<MatrixXd> svd(Z, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    cout << "U: " << svd.matrixU(); 
 
-    mat P(1, 1);
-    P = U(1, 0) * U(0, 0); //U(1, 0)*inv(U(0, 0));
+    Matrix3d U_10 = svd.matrixU().block(3, 0, 3, 3);
+    Matrix3d U_00 = svd.matrixU().block(0, 0, 3, 3);
+    Matrix3d P;
+    P = U_10 * U_00.inverse(); //U(1, 0)*inv(U(0, 0));
     //R should also be inverted here
-    vec K = -R * B_T * P;
+    MatrixXd K;
+    K = -R * B_T * P;
 
     return K;
 }
@@ -160,36 +181,38 @@ void set_position_servo(const mjModel* m, int actuator_no, double kp)
 
 void mycontroller(const mjModel* m, mjData* d)
 {
-  int actuator_no;
+    int actuator_no;
 
-  //0 = first leg joint
-  actuator_no = 0;
-  set_position_servo(m, actuator_no, 0);
-  d->ctrl[0] = 0;
+    //0 = first leg joint
+    actuator_no = 0;
+    set_position_servo(m, actuator_no, 0);
+    d->ctrl[0] = 0;
 
-  //1 = second leg joint
-  actuator_no = 1;
-  set_position_servo(m, actuator_no, 0);
-  d->ctrl[1] = 0;
+    //1 = second leg joint
+    actuator_no = 1;
+    set_position_servo(m, actuator_no, 0);
+    d->ctrl[1] = 0;
 
-  //2 = reaction wheel 1 (x)
-  mat controls;
-  controls = LQR_controller(m, d);
-//   K = arma::conv_to <std::vector<double>>::from(controls);
-  double K = arma::conv_to <double>::from(controls);
+    //2 = reaction wheel 1 (x)
+    MatrixXd controls;
+    controls = LQR_controller(m, d);
+    //K = arma::conv_to <std::vector<double>>::from(controls);
+    //double *Kf = controls.data();
+    double *K;
+    Map<MatrixXd>(K, controls.rows(), controls.cols()) = controls;
 
-  actuator_no = 2;
-  mjtNum state[2*m->nq];
-  state[2] -= M_PI_2; // stand-up position
-  mjtNum ctrl = mju_dot(&K, state, 2*m->nq);
-  d->ctrl[2] = -ctrl;
+    actuator_no = 2;
+    mjtNum state[2*m->nq];
+    state[2] -= M_PI_2; // stand-up position
+    mjtNum ctrl = mju_dot(K, state, 2*m->nq);
+    d->ctrl[2] = -ctrl;
 
-  //3 = reaction wheel 2 (y)
-  actuator_no = 3;
-  controls = LQR_controller(m, d);
-  state[3] -= M_PI_2; // stand-up position
-  ctrl = mju_dot(&K, state, 2*m->nq);
-  d->ctrl[3] = -ctrl;
+    //3 = reaction wheel 2 (y)
+    actuator_no = 3;
+    controls = LQR_controller(m, d);
+    state[3] -= M_PI_2; // stand-up position
+    ctrl = mju_dot(K, state, 2*m->nq);
+    d->ctrl[3] = -ctrl;
 }
 
 // main function

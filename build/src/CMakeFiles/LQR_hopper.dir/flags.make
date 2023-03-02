@@ -6,5 +6,5 @@ CXX_FLAGS =
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/sofia/LQR_hopper/include -I/home/sofia/LQR_hopper/src 
+CXX_INCLUDES = -I/home/sofia/LQR_hopper/include -I/home/sofia/LQR_hopper/src -isystem /usr/include/eigen3 
 
