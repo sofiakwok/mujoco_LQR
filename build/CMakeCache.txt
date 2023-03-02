@@ -14,69 +14,6 @@
 # EXTERNAL cache entries
 ########################
 
-//Path to a library.
-BLAS_Accelerate_LIBRARY:FILEPATH=BLAS_Accelerate_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_acml_LIBRARY:FILEPATH=BLAS_acml_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_acml_mp_LIBRARY:FILEPATH=BLAS_acml_mp_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_blas_LIBRARY:FILEPATH=BLAS_blas_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_blis_LIBRARY:FILEPATH=BLAS_blis_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_complib.sgimath_LIBRARY:FILEPATH=BLAS_complib.sgimath_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_cxml_LIBRARY:FILEPATH=BLAS_cxml_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_dxml_LIBRARY:FILEPATH=BLAS_dxml_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_essl_LIBRARY:FILEPATH=BLAS_essl_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_f77blas_LIBRARY:FILEPATH=BLAS_f77blas_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_goto2_LIBRARY:FILEPATH=BLAS_goto2_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_mkl_LIBRARY:FILEPATH=BLAS_mkl_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_mkl_em64t_LIBRARY:FILEPATH=BLAS_mkl_em64t_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_mkl_ia32_LIBRARY:FILEPATH=BLAS_mkl_ia32_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_mkl_intel_LIBRARY:FILEPATH=BLAS_mkl_intel_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_mkl_intel_lp64_LIBRARY:FILEPATH=BLAS_mkl_intel_lp64_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_openblas_LIBRARY:FILEPATH=BLAS_openblas_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_scsl_LIBRARY:FILEPATH=BLAS_scsl_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_sgemm_LIBRARY:FILEPATH=BLAS_sgemm_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_sunperf_LIBRARY:FILEPATH=BLAS_sunperf_LIBRARY-NOTFOUND
-
-//Path to a library.
-BLAS_vecLib_LIBRARY:FILEPATH=BLAS_vecLib_LIBRARY-NOTFOUND
-
 //Path to a program.
 CMAKE_ADDR2LINE:FILEPATH=/usr/bin/addr2line
 
@@ -85,7 +22,7 @@ CMAKE_AR:FILEPATH=/usr/bin/ar
 
 //Choose the type of build, options are: None Debug Release RelWithDebInfo
 // MinSizeRel ...
-CMAKE_BUILD_TYPE:STRING=
+CMAKE_BUILD_TYPE:STRING=Debug
 
 //Enable/Disable color output during build.
 CMAKE_COLOR_MAKEFILE:BOOL=ON
@@ -284,58 +221,11 @@ LQR_hopper_SOURCE_DIR:STATIC=/home/sofia/LQR_hopper
 //The directory containing a CMake configuration file for glfw3.
 glfw3_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/glfw3
 
-//The directory containing a CMake configuration file for lapack.
-lapack_DIR:PATH=lapack_DIR-NOTFOUND
-
 
 ########################
 # INTERNAL cache entries
 ########################
 
-//ADVANCED property for variable: BLAS_Accelerate_LIBRARY
-BLAS_Accelerate_LIBRARY-ADVANCED:INTERNAL=1
-//Have function sgemm_
-BLAS_WORKS:INTERNAL=
-//ADVANCED property for variable: BLAS_acml_LIBRARY
-BLAS_acml_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_acml_mp_LIBRARY
-BLAS_acml_mp_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_blas_LIBRARY
-BLAS_blas_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_blis_LIBRARY
-BLAS_blis_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_complib.sgimath_LIBRARY
-BLAS_complib.sgimath_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_cxml_LIBRARY
-BLAS_cxml_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_dxml_LIBRARY
-BLAS_dxml_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_essl_LIBRARY
-BLAS_essl_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_f77blas_LIBRARY
-BLAS_f77blas_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_goto2_LIBRARY
-BLAS_goto2_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_mkl_LIBRARY
-BLAS_mkl_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_mkl_em64t_LIBRARY
-BLAS_mkl_em64t_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_mkl_ia32_LIBRARY
-BLAS_mkl_ia32_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_mkl_intel_LIBRARY
-BLAS_mkl_intel_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_mkl_intel_lp64_LIBRARY
-BLAS_mkl_intel_lp64_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_openblas_LIBRARY
-BLAS_openblas_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_scsl_LIBRARY
-BLAS_scsl_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_sgemm_LIBRARY
-BLAS_sgemm_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_sunperf_LIBRARY
-BLAS_sunperf_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: BLAS_vecLib_LIBRARY
-BLAS_vecLib_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_ADDR2LINE
 CMAKE_ADDR2LINE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_AR
@@ -414,14 +304,6 @@ CMAKE_GENERATOR_INSTANCE:INTERNAL=
 CMAKE_GENERATOR_PLATFORM:INTERNAL=
 //Name of generator toolset.
 CMAKE_GENERATOR_TOOLSET:INTERNAL=
-//Test CMAKE_HAVE_LIBC_PTHREAD
-CMAKE_HAVE_LIBC_PTHREAD:INTERNAL=
-//Have library pthreads
-CMAKE_HAVE_PTHREADS_CREATE:INTERNAL=
-//Have library pthread
-CMAKE_HAVE_PTHREAD_CREATE:INTERNAL=1
-//Have include pthread.h
-CMAKE_HAVE_PTHREAD_H:INTERNAL=1
 //Source directory with the top level CMakeLists.txt file for this
 // project
 CMAKE_HOME_DIRECTORY:INTERNAL=/home/sofia/LQR_hopper
@@ -487,6 +369,4 @@ CMAKE_STRIP-ADVANCED:INTERNAL=1
 CMAKE_UNAME:INTERNAL=/usr/bin/uname
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
-//Details about finding Threads
-FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
 

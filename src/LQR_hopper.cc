@@ -126,7 +126,6 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     A(1, 0) = b*g/a;
     A(2, 0) = -b*g/a;
     cout << "A: " << A << endl; 
-    cout << "Ainv: " << A.inverse() << endl;
     Matrix<double, 3, 3> A_T = A.transpose();
     Matrix<double, 3, 1> B = {{0}, {-1/a}, {(a + I_rw)/(a*I_rw)}};
     cout << "B: " << B << endl;
@@ -142,31 +141,19 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     //this is sus
     double R = 1;
 
-    Matrix<double, 3, 3> A_inv_T = A.inverse().transpose();
-    cout << "A inv: " << A_inv_T << endl;
-    //R should be inverted here
-    MatrixXd Z1(3, 6); 
-    MatrixXd Z2(3, 6);
-    MatrixXd Z;
-    MatrixXd xi(3, 3);
-    xi  = A + B*R*B_T*A_inv_T*Q;
-    cout << "xi: " << xi << endl;
-    MatrixXd xi2(3, 3);
-    xi2 = -B*R*B_T*A_inv_T;
-    Z1 << xi, xi2;
-    Z2 << -A_inv_T*Q.cast<double>(), A_inv_T.cast<double>();
-    Z << Z1, Z2;
-    JacobiSVD<MatrixXd> svd(Z, Eigen::ComputeFullU | Eigen::ComputeFullV);
-    cout << "U: " << svd.matrixU(); 
-
-    Matrix3d U_10 = svd.matrixU().block(3, 0, 3, 3);
-    Matrix3d U_00 = svd.matrixU().block(0, 0, 3, 3);
-    Matrix3d P;
-    P = U_10 * U_00.inverse(); //U(1, 0)*inv(U(0, 0));
-    //R should also be inverted here
+    Matrix3d P = Q;
     MatrixXd K;
-    K = -R * B_T * P;
-
+    //backwards Ricatti recursion
+    Matrix3d Pn;
+    //change arbitary amount of timesteps here
+    for (int i = 10; i > 0; i--){
+        K = 1/(R + B_T*P*B)*B_T*P*A;
+        cout << "K: " << K << endl;
+        Pn = Q + A_T*P*(A - B*K);
+        cout << "Pn: " << Pn << endl;
+        P = Pn;
+    }
+    cout << "K: " << K << endl;
     return K;
 }
 
