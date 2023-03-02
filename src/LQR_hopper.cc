@@ -141,11 +141,11 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     //this is sus
     double R = 1;
 
+    //backwards Ricatti recursion
     Matrix3d P = Q;
     MatrixXd K;
-    //backwards Ricatti recursion
     Matrix3d Pn;
-    //change arbitary amount of timesteps here
+    //change arbitary amount of timesteps here at some point
     for (int i = 10; i > 0; i--){
         K = 1/(R + B_T*P*B)*B_T*P*A;
         cout << "K: " << K << endl;
@@ -180,14 +180,13 @@ void mycontroller(const mjModel* m, mjData* d)
     set_position_servo(m, actuator_no, 0);
     d->ctrl[1] = 0;
 
-    //2 = reaction wheel 1 (x)
     MatrixXd controls;
     controls = LQR_controller(m, d);
-    //K = arma::conv_to <std::vector<double>>::from(controls);
-    //double *Kf = controls.data();
+    //converting K matrix to K double
     double *K;
     Map<MatrixXd>(K, controls.rows(), controls.cols()) = controls;
 
+    //2 = reaction wheel 1 (x)
     actuator_no = 2;
     mjtNum state[2*m->nq];
     state[2] -= M_PI_2; // stand-up position
