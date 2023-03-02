@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o  -o LQR_hopper  -lmujoco 
