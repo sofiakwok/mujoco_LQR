@@ -1,6 +1,6 @@
 <mujoco model="hopper_rev10">
   <compiler inertiafromgeom='false' angle="radian"/>
-  <option integrator="Euler" timestep="0.001"/>
+  <option integrator="RK4" timestep="0.001"/>
   <size njmax="500" nconmax="100"/>
   <!-- <default/> -->
   <asset>

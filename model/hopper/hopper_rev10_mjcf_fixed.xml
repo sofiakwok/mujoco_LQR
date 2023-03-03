@@ -1,6 +1,6 @@
 <mujoco model="hopper_rev10">
   <compiler inertiafromgeom='false' angle="radian"/>
-  <option integrator="Euler" timestep="0.001"/>
+  <option integrator="RK4" timestep="0.001"/>
   <size njmax="500" nconmax="100"/>
   <!-- <default/> -->
   <asset>
@@ -28,7 +28,7 @@
     <body name="base_link" pos="0 0 0.5" quat="1 0 0 0">
       <site name='imu' size='0.01' pos='0 0 0'/>
       <inertial pos="-0.00418136 0.00001975 0.01669539" quat="1 0 0 0" mass="4.74662308" diaginertia="0.03772045 0.01927139 0.03899715"/>
-      <!-- <joint type="free" stiffness="0" damping="0" frictionloss="0" armature="0"/> -->
+      <joint type="free" stiffness="0" damping="0" frictionloss="0" armature="0"/>
       <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.752941 0.752941 0.752941 1" mesh="base_link"/>
       <geom type="mesh" rgba="0.752941 0.752941 0.752941 1" mesh="base_link"/>
       <body name="Link 0" pos="0 0 0" quat="0.965926 0 0.258819 0">
@@ -39,7 +39,7 @@
         <geom type="mesh" rgba="0.752941 0.752941 0.752941 1" mesh="Link 0"/>
         <body name="Link 1" pos="0.1 0 0" quat="0.5 0 0.866025 0">
           <inertial pos="0.135392 0.0069372 5.37952e-09" quat="0.5 0.5 0.5 0.5" mass="0.0809766" diaginertia="0.00000391 0.00068989 0.00068741"/>
-          <joint name="Joint 1" pos="0 0 0" axis="0 -1 0" range="-0.7597 1.8295" limited="true"/>
+          <joint name="Joint 1" pos="0 0 0" axis="0 -1 0" limited="true" range="-0.7597 1.8295"/>
           <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.752941 0.752941 0.752941 1" mesh="Link 1"/>
           <geom type="mesh" rgba="0.752941 0.752941 0.752941 1" mesh="Link 1"/>
         </body>
@@ -88,7 +88,7 @@
 	</equality>
 
   <actuator>
-    <motor joint='Joint 0' name='q0' gear="1 0 0 0 0 0" forcelimited="false" ctrllimited="false"/>
+    <motor joint="Joint 0" name='q0' gear="1 0 0 0 0 0" forcelimited="false" ctrllimited="false"/>
 	</actuator>
   <actuator>
     <motor joint='Joint 2' name='q2' gear="1 0 0 0 0 0" forcelimited="false" ctrllimited="false"/>
