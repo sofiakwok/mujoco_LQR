@@ -118,17 +118,17 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     double l = 0.75;
 
     double a = rw_mass*L*L + I_p; 
-    cout << "a: " << a << endl;
+    //cout << "a: " << a << endl;
     double b = mass*l + rw_mass*L;
 
     Matrix<double, 3, 3> A;
     A(0, 1) = 1;
     A(1, 0) = b*g/a;
     A(2, 0) = -b*g/a;
-    cout << "A: " << A << endl; 
+    //cout << "A: " << A << endl; 
     Matrix<double, 3, 3> A_T = A.transpose();
     Matrix<double, 3, 1> B = {{0}, {-1/a}, {(a + I_rw)/(a*I_rw)}};
-    cout << "B: " << B << endl;
+    //cout << "B: " << B << endl;
     Matrix<double, 1, 3> B_T = B.transpose();
     Matrix<double, 1, 3> C = {1.0, 0, 0};
     Matrix<double, 3, 1> C_T = C.transpose();
@@ -137,7 +137,7 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
 
     Matrix<double, 3, 3> Q;
     Q = C_T * C;
-    cout << "Q: " << Q << endl;
+    //cout << "Q: " << Q << endl;
     //this is sus
     double R = 1;
 
@@ -148,12 +148,12 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     //change arbitary amount of timesteps here at some point
     for (int i = 10; i > 0; i--){
         K = 1/(R + B_T*P*B)*B_T*P*A;
-        cout << "K: " << K << endl;
+        //cout << "K: " << K << endl;
         Pn = Q + A_T*P*(A - B*K);
-        cout << "Pn: " << Pn << endl;
+        //cout << "Pn: " << Pn << endl;
         P = Pn;
     }
-    cout << "K: " << K << endl;
+    //cout << "K: " << K << endl;
     return K;
 }
 
@@ -169,36 +169,60 @@ void set_position_servo(const mjModel* m, int actuator_no, double kp)
 void mycontroller(const mjModel* m, mjData* d)
 {
     int actuator_no;
+    int bodyid;
 
     //0 = first leg joint
-    actuator_no = 0;
-    set_position_servo(m, actuator_no, 0);
-    d->ctrl[0] = 0;
+    actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "q0");
+    // set_position_servo(m, actuator_no, 1000);
+    d->ctrl[actuator_no] = 0;
 
     //1 = second leg joint
-    actuator_no = 1;
-    set_position_servo(m, actuator_no, 0);
-    d->ctrl[1] = 0;
+    actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "q2");
+    // set_position_servo(m, actuator_no, 1000);
+    d->ctrl[actuator_no] = 0;
 
+    //fix leg angles 
+    int joint_leg0 = mj_name2id(m, mjOBJ_JOINT, "Joint 0");
+    int act_leg0 = mj_name2id(m, mjOBJ_ACTUATOR, "q0");
+    d->ctrl[act_leg0] = -2000*d->qpos[m->jnt_qposadr[joint_leg0]] - 5*d->qvel[m->jnt_dofadr[joint_leg0]];
+    int joint_leg2 = mj_name2id(m, mjOBJ_JOINT, "Joint 2");
+    int act_leg2 = mj_name2id(m, mjOBJ_ACTUATOR, "q2");
+    d->ctrl[act_leg2] = -2000*d->qpos[m->jnt_qposadr[joint_leg2]] - 5*d->qvel[m->jnt_dofadr[joint_leg2]];
+
+    //getting K matrix for LQR controls
     MatrixXd controls;
     controls = LQR_controller(m, d);
+
     //converting K matrix to K double
-    double *K;
+    double K[3];
     Map<MatrixXd>(K, controls.rows(), controls.cols()) = controls;
 
+    //getting current COM position and velocity
+    //body name is not right (?) 
+    bodyid = mj_name2id(m, mjOBJ_BODY, "Link 2");
+    int qposadr = -1, qveladr = -1;
+    //7 number position data: gives current position in 3D followed by a unit quaternion
+    qposadr = m->jnt_qposadr[m->body_jntadr[bodyid]];
+    //6 number velocity data - gives linear velocity followed by angular velocity
+    qveladr = m->jnt_dofadr[m->body_jntadr[bodyid]];
+
+
     //2 = reaction wheel 1 (x)
-    actuator_no = 2;
+    actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
+    bodyid = mj_name2id(m, mjOBJ_BODY, "myfloatingbody");
     mjtNum state[2*m->nq];
-    state[2] -= M_PI_2; // stand-up position
-    mjtNum ctrl = mju_dot(K, state, 2*m->nq);
-    d->ctrl[2] = -ctrl;
+    qveladr = m->jnt_dofadr[m->body_jntadr[actuator_no]];
+    state[0] -= M_PI_2; // stand-up position
+    mjtNum ctrl = mju_dot(K, state, 1);
+    cout << "control (x): " << ctrl << endl;
+    // d->ctrl[actuator_no] = -ctrl;
 
     //3 = reaction wheel 2 (y)
-    actuator_no = 3;
-    controls = LQR_controller(m, d);
-    state[3] -= M_PI_2; // stand-up position
+    actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
+    bodyid = mj_name2id(m, mjOBJ_BODY, "myfloatingbody");
     ctrl = mju_dot(K, state, 2*m->nq);
-    d->ctrl[3] = -ctrl;
+    cout << "control (y): " << ctrl << endl;
+    // d->ctrl[actuator_no] = -ctrl;
 }
 
 // main function

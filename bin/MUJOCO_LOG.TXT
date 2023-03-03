@@ -1,0 +1,52 @@
+Fri Mar  3 11:49:37 2023
+ERROR: Load model error: Error: joint has `range` but not `limited`. set the autolimits="true" compiler option, specify `limited` explicitly ("true" or "false"), or remove the `range` attribute.
+Object name = Joint 1, id = 1, line = 42, column = -1
+
+Fri Mar  3 11:53:24 2023
+WARNING: Nan, Inf or huge value in CTRL at ACTUATOR 3. The simulation is unstable. Time = 0.0000.
+
+Fri Mar  3 11:54:02 2023
+WARNING: Nan, Inf or huge value in CTRL at ACTUATOR 3. The simulation is unstable. Time = 0.0000.
+
+Fri Mar  3 12:33:26 2023
+WARNING: Nan, Inf or huge value in CTRL at ACTUATOR 4. The simulation is unstable. Time = 0.0000.
+
+Fri Mar  3 12:37:59 2023
+WARNING: Nan, Inf or huge value in QACC at DOF 4. The simulation is unstable. Time = 1.9260.
+
+Fri Mar  3 14:18:57 2023
+WARNING: Nan, Inf or huge value in QACC at DOF 6. The simulation is unstable. Time = 0.0040.
+
+Fri Mar  3 14:19:06 2023
+WARNING: Nan, Inf or huge value in QACC at DOF 6. The simulation is unstable. Time = 0.0040.
+
+Fri Mar  3 14:20:05 2023
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0100.
+
+Fri Mar  3 14:20:50 2023
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 2.8150.
+
+Fri Mar  3 14:26:30 2023
+WARNING: Nan, Inf or huge value in QACC at DOF 6. The simulation is unstable. Time = 0.0290.
+
+Fri Mar  3 14:26:48 2023
+WARNING: Nan, Inf or huge value in QACC at DOF 6. The simulation is unstable. Time = 0.0300.
+
+Fri Mar  3 14:28:02 2023
+WARNING: Nan, Inf or huge value in QACC at DOF 6. The simulation is unstable. Time = 0.0300.
+
+Fri Mar  3 14:28:15 2023
+WARNING: Nan, Inf or huge value in QACC at DOF 6. The simulation is unstable. Time = 0.0300.
+
+Fri Mar  3 14:31:37 2023
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0230.
+
+Fri Mar  3 14:33:01 2023
+WARNING: Nan, Inf or huge value in QACC at DOF 2. The simulation is unstable. Time = 0.0370.
+
+Fri Mar  3 14:33:28 2023
+WARNING: Nan, Inf or huge value in QACC at DOF 4. The simulation is unstable. Time = 0.0810.
+
+Fri Mar  3 14:33:46 2023
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0840.
+
