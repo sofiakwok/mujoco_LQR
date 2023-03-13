@@ -73,6 +73,10 @@ stdbool.h
 -
 iostream
 -
+math.h
+-
+cmath
+-
 GLFW/glfw3.h
 -
 mujoco/mujoco.h
