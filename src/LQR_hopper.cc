@@ -199,27 +199,32 @@ void mycontroller(const mjModel* m, mjData* d)
 
     //getting current COM position and velocity
     //body name is not right, need to add a body at COM
-    bodyid = mj_name2id(m, mjOBJ_BODY, "Link 2");
-    int qposadr = -1, qveladr = -1;
+    bodyid = mj_name2id(m, mjOBJ_BODY, "rwz");
+    int composadr = -1, comveladr = -1;
     //7 number position data: gives current position in 3D followed by a unit quaternion
-    qposadr = m->jnt_qposadr[m->body_jntadr[bodyid]];
+    composadr = m->jnt_qposadr[m->body_jntadr[bodyid]];
+    mjtNum COM_pos = d->qpos[composadr];
     //6 number velocity data - gives linear velocity followed by angular velocity
-    qveladr = m->jnt_dofadr[m->body_jntadr[bodyid]];
-
+    comveladr = m->jnt_dofadr[m->body_jntadr[bodyid]];
+    mjtNum COM_vel = d->qpos[comveladr];
+    cout << "com vel: " << COM_vel << endl;
 
     //2 = reaction wheel 1 (x)
     actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
-    bodyid = mj_name2id(m, mjOBJ_BODY, "myfloatingbody");
     mjtNum state[2*m->nq];
-    qveladr = m->jnt_dofadr[m->body_jntadr[actuator_no]];
-    state[0] -= M_PI_2; // stand-up position
+    int xveladr = -1;
+    xveladr = m->jnt_dofadr[m->body_jntadr[actuator_no]];
+    mjtNum xvel = d->qvel[xveladr];
+    state[0] = COM_pos;
+    state[1] = COM_vel;
+    state[2] = xvel;
+    cout << "state: " << state << endl;
     mjtNum ctrl = mju_dot(K, state, 1);
     cout << "control (x): " << ctrl << endl;
     d->ctrl[actuator_no] = -ctrl;
 
     //3 = reaction wheel 2 (y)
     actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
-    bodyid = mj_name2id(m, mjOBJ_BODY, "myfloatingbody");
     ctrl = mju_dot(K, state, 2*m->nq);
     cout << "control (y): " << ctrl << endl;
     d->ctrl[actuator_no] = -ctrl;
