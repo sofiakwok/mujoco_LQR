@@ -17,7 +17,7 @@
 using namespace std;
 using namespace Eigen;
 
-char filename[] = "../model/hopper/hopper_rev10_mjcf.xml";
+char filename[] = "../model/hopper/hopper_rev10_mjcf_fixed.xml";
 
 // MuJoCo data structures
 mjModel* m = NULL;                  // MuJoCo model
@@ -168,10 +168,13 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     discretize << A_B/60, end_row/60;
     MatrixXd expo;
     expo = discretize.exp();
-    cout << "expo: " << expo << endl;
-    Map<MatrixXd> A(expo.data(), 3, 3);
-    cout << "A: " << A << endl;
-    Map<MatrixXd> B(expo.data()+12, 3, 1);
+    //cout << "expo: " << expo << endl;
+    //getting 3x3 A matrix
+    MatrixXd A;
+    A = expo.block<3, 3>(0, 0);
+    //cout << "A: " << A << endl;
+    MatrixXd B = expo.block<3, 1>(0, 3);
+    //cout << "B: " << B << endl;
     Matrix3d A_T = A.transpose();
     Matrix<double, 1, 3> B_T = B.transpose();
 
@@ -181,13 +184,13 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 1> D = {0, 0, 0};
 
     MatrixXd Q = C_T * C;
-    Q(0, 0) = 100;
-    Q(1, 1) = 100;
-    Q(2, 2) = 100;
+    Q(0, 0) = 1;
+    Q(1, 1) = 1;
+    Q(2, 2) = 1;
     //cout << "Q: " << Q << endl;
     //this is sus
     Matrix<double, 1, 1> R;
-    R(0, 0) = 0.01;
+    R(0, 0) = 10;
     Matrix3d P = Q;
     MatrixXd K;
     Matrix3d Pn;
@@ -247,6 +250,9 @@ void mycontroller(const mjModel* m, mjData* d)
     //converting to euler angles
     MatrixXd euler_angles;
     euler_angles = quat_to_euler(com_pos);
+    cout << "euler angle (x): " << euler_angles(0) << endl;
+    cout << "euler angle (y): " << euler_angles(1) << endl;
+    cout << "euler angle (z): " << euler_angles(2) << endl;
     //velocity data - gives linear velocity followed by angular velocity (# of entries = # of DOF)
     mjtNum com_vel[4];
     mju_copy(com_vel, d->qvel + m->jnt_dofadr[m->body_jntadr[bodyid]], 4);
@@ -264,25 +270,33 @@ void mycontroller(const mjModel* m, mjData* d)
     xveladr = m->jnt_dofadr[m->body_jntadr[body_rw0]];
     mjtNum xvel = d->qvel[xveladr];
     //cout << "rw (x): " << xvel << endl;
-    state[0] = euler_angles(0);
+    state[0] = euler_angles(0) - M_PI_2;
     state[1] = com_vel[0];
     state[2] = xvel;
     mjtNum ctrl = mju_dot(K, state, 1);
-    //cout << "control (x): " << ctrl << endl;
+    cout << "control (x): " << ctrl << endl;
+    // clamp controls
+    if (ctrl > 11.24){
+        ctrl = 11.24;
+    }
     d->ctrl[actuator_no] = -ctrl;
 
-    //3 = reaction wheel 2 (z)
+    //3 = reaction wheel 2 (y)
     actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
     int body_rw1 = mj_name2id(m, mjOBJ_BODY, "rw1");
     int yveladr = -1;
     yveladr = m->jnt_dofadr[m->body_jntadr[body_rw1]];
     mjtNum yvel = d->qvel[yveladr];
-    //cout << "rw (z): " << yvel << endl;
-    state[0] = euler_angles(2);
-    state[1] = com_vel[2];
+    //cout << "rw (y): " << yvel << endl;
+    state[0] = euler_angles(1) - M_PI_2;
+    state[1] = com_vel[1];
     state[2] = yvel;
     ctrl = mju_dot(K, state, 1);
-    //cout << "control (y): " << ctrl << endl;
+    cout << "control (y): " << ctrl << endl;
+    //clamping controls 
+    if (ctrl > 11.24){
+        ctrl = 11.24;
+    }
     d->ctrl[actuator_no] = -ctrl;
 }
 
