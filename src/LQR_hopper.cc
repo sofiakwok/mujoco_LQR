@@ -168,11 +168,12 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     discretize << A_B/60, end_row/60;
     MatrixXd expo;
     expo = discretize.exp();
-    Map<MatrixXd> A(expo.data(), 3, 2);
+    cout << "expo: " << expo << endl;
+    Map<MatrixXd> A(expo.data(), 3, 3);
+    cout << "A: " << A << endl;
     Map<MatrixXd> B(expo.data()+12, 3, 1);
     Matrix3d A_T = A.transpose();
     Matrix<double, 1, 3> B_T = B.transpose();
-
 
     Matrix<double, 1, 3> C = {1.0, 0, 0};
     Matrix<double, 3, 1> C_T = C.transpose();
@@ -192,15 +193,15 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix3d Pn;
     Matrix3d P2; 
 
-    for (int ricatti = 2; ricatti < 100; ricatti++){
+    for (int ricatti = 2; ricatti < 1000; ricatti++){
         //backwards Ricatti recursion
         //change arbitary amount of timesteps here at some point
         for (int i = ricatti; i > 0; i--){
             // not using inv() here because R + B_T*P*B is a scalar
             K = (R + B_T*P*B).inverse()*B_T*P*A;
-            cout << "K: " <<K << endl;
+            //cout << "K: " <<K << endl;
             Pn = Q + A_T*P*(A - B*K);
-            cout << "Pn: " << Pn << endl;
+            //cout << "Pn: " << Pn << endl;
             P2 = P;
             P = Pn;
         }
