@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/sofia/LQR_hopper
+CMAKE_SOURCE_DIR = /home/sofia/mujoco_LQR
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/sofia/LQR_hopper/build
+CMAKE_BINARY_DIR = /home/sofia/mujoco_LQR/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,14 +80,14 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/sofia/LQR_hopper/build && $(CMAKE_COMMAND) -E cmake_progress_start /home/sofia/LQR_hopper/build/CMakeFiles /home/sofia/LQR_hopper/build/src/CMakeFiles/progress.marks
-	cd /home/sofia/LQR_hopper/build && $(MAKE) -f CMakeFiles/Makefile2 src/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/sofia/LQR_hopper/build/CMakeFiles 0
+	cd /home/sofia/mujoco_LQR/build && $(CMAKE_COMMAND) -E cmake_progress_start /home/sofia/mujoco_LQR/build/CMakeFiles /home/sofia/mujoco_LQR/build/src/CMakeFiles/progress.marks
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f CMakeFiles/Makefile2 src/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/sofia/mujoco_LQR/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/sofia/LQR_hopper/build && $(MAKE) -f CMakeFiles/Makefile2 src/clean
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f CMakeFiles/Makefile2 src/clean
 .PHONY : clean
 
 # The main clean target
@@ -97,22 +97,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/sofia/LQR_hopper/build && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/sofia/LQR_hopper/build && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/sofia/LQR_hopper/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/sofia/mujoco_LQR/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/CMakeFiles/LQR_hopper.dir/rule:
-	cd /home/sofia/LQR_hopper/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/LQR_hopper.dir/rule
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/LQR_hopper.dir/rule
 .PHONY : src/CMakeFiles/LQR_hopper.dir/rule
 
 # Convenience name for target.
@@ -122,7 +122,7 @@ LQR_hopper: src/CMakeFiles/LQR_hopper.dir/rule
 
 # fast build rule for target.
 LQR_hopper/fast:
-	cd /home/sofia/LQR_hopper/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/build
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/build
 .PHONY : LQR_hopper/fast
 
 LQR_hopper.o: LQR_hopper.cc.o
@@ -131,7 +131,7 @@ LQR_hopper.o: LQR_hopper.cc.o
 
 # target to build an object file
 LQR_hopper.cc.o:
-	cd /home/sofia/LQR_hopper/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o
 .PHONY : LQR_hopper.cc.o
 
 LQR_hopper.i: LQR_hopper.cc.i
@@ -140,7 +140,7 @@ LQR_hopper.i: LQR_hopper.cc.i
 
 # target to preprocess a source file
 LQR_hopper.cc.i:
-	cd /home/sofia/LQR_hopper/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.i
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.i
 .PHONY : LQR_hopper.cc.i
 
 LQR_hopper.s: LQR_hopper.cc.s
@@ -149,7 +149,7 @@ LQR_hopper.s: LQR_hopper.cc.s
 
 # target to generate assembly for a file
 LQR_hopper.cc.s:
-	cd /home/sofia/LQR_hopper/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.s
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.s
 .PHONY : LQR_hopper.cc.s
 
 # Help Target
@@ -175,6 +175,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/sofia/LQR_hopper/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/sofia/mujoco_LQR/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

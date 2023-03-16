@@ -12,6 +12,7 @@
 #include <Eigen/Core>
 #include <Eigen/SVD>
 #include <Eigen/Dense>
+#include <unsupported/Eigen/MatrixFunctions>
 // #include <lapack>
 using namespace std;
 using namespace Eigen;
@@ -152,15 +153,27 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     //cout << "a: " << a << endl;
     double b = mass*l + rw_mass*L;
 
-    Matrix3d A;
-    A << 0, 1, 0, 
+    Matrix3d A_cont;
+    A_cont << 0, 1, 0, 
         b*g/a, 0, 0,
         -b*g/a, 0, 0;
-    //cout << "A: " << A << endl; 
-    Matrix<double, 3, 3> A_T = A.transpose();
-    Matrix<double, 3, 1> B = {{0}, {-1/a}, {(a + I_rw)/(a*I_rw)}};
-    //cout << "B: " << B << endl;
+    Matrix<double, 3, 1> B_cont = {{0}, {-1/a}, {(a + I_rw)/(a*I_rw)}};
+
+    // discretize continuous time model
+    MatrixXd A_B(3, 4);
+    A_B << A_cont, B_cont;
+    MatrixXd discretize(4, 4);
+    MatrixXd end_row(1, 4);
+    end_row << 0, 0, 0, 0;
+    discretize << A_B/60, end_row/60;
+    MatrixXd expo;
+    expo = discretize.exp();
+    Map<MatrixXd> A(expo.data(), 3, 2);
+    Map<MatrixXd> B(expo.data()+12, 3, 1);
+    Matrix3d A_T = A.transpose();
     Matrix<double, 1, 3> B_T = B.transpose();
+
+
     Matrix<double, 1, 3> C = {1.0, 0, 0};
     Matrix<double, 3, 1> C_T = C.transpose();
     //not used at all
@@ -172,8 +185,8 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Q(2, 2) = 100;
     //cout << "Q: " << Q << endl;
     //this is sus
-    double R = 0.0001;
-
+    Matrix<double, 1, 1> R;
+    R(0, 0) = 0.01;
     Matrix3d P = Q;
     MatrixXd K;
     Matrix3d Pn;
@@ -184,7 +197,7 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
         //change arbitary amount of timesteps here at some point
         for (int i = ricatti; i > 0; i--){
             // not using inv() here because R + B_T*P*B is a scalar
-            K = 1/(R + B_T*P*B)*B_T*P*A;
+            K = (R + B_T*P*B).inverse()*B_T*P*A;
             cout << "K: " <<K << endl;
             Pn = Q + A_T*P*(A - B*K);
             cout << "Pn: " << Pn << endl;

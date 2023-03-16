@@ -11,7 +11,7 @@ src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o
  ../include/mujoco/mjui.h
  ../include/mujoco/mjvisualize.h
  ../include/mujoco/mujoco.h
- /home/sofia/LQR_hopper/src/LQR_hopper.cc
+ /home/sofia/mujoco_LQR/src/LQR_hopper.cc
  /usr/include/eigen3/Eigen/Cholesky
  /usr/include/eigen3/Eigen/Core
  /usr/include/eigen3/Eigen/Dense
@@ -219,3 +219,10 @@ src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o
  /usr/include/eigen3/Eigen/src/plugins/CommonCwiseUnaryOps.h
  /usr/include/eigen3/Eigen/src/plugins/MatrixCwiseBinaryOps.h
  /usr/include/eigen3/Eigen/src/plugins/MatrixCwiseUnaryOps.h
+ /usr/include/eigen3/unsupported/Eigen/MatrixFunctions
+ /usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixExponential.h
+ /usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixFunction.h
+ /usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixLogarithm.h
+ /usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixPower.h
+ /usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixSquareRoot.h
+ /usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/StemFunction.h

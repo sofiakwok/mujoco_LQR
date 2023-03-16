@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/sofia/LQR_hopper/src/LQR_hopper.cc" "/home/sofia/LQR_hopper/build/src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o"
+  "/home/sofia/mujoco_LQR/src/LQR_hopper.cc" "/home/sofia/mujoco_LQR/build/src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

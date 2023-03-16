@@ -68,7 +68,7 @@ mujoco/mjui.h
 mujoco/mjvisualize.h
 -
 
-/home/sofia/LQR_hopper/src/LQR_hopper.cc
+/home/sofia/mujoco_LQR/src/LQR_hopper.cc
 stdbool.h
 -
 iostream
@@ -82,16 +82,18 @@ GLFW/glfw3.h
 mujoco/mujoco.h
 -
 stdio.h
-/home/sofia/LQR_hopper/src/stdio.h
+/home/sofia/mujoco_LQR/src/stdio.h
 stdlib.h
-/home/sofia/LQR_hopper/src/stdlib.h
+/home/sofia/mujoco_LQR/src/stdlib.h
 string.h
-/home/sofia/LQR_hopper/src/string.h
+/home/sofia/mujoco_LQR/src/string.h
 Eigen/Core
 -
 Eigen/SVD
 -
 Eigen/Dense
+-
+unsupported/Eigen/MatrixFunctions
 -
 
 /usr/include/eigen3/Eigen/Cholesky
@@ -1139,4 +1141,46 @@ lapacke_mangling.h
 /usr/include/eigen3/Eigen/src/plugins/MatrixCwiseBinaryOps.h
 
 /usr/include/eigen3/Eigen/src/plugins/MatrixCwiseUnaryOps.h
+
+/usr/include/eigen3/unsupported/Eigen/MatrixFunctions
+cfloat
+-
+list
+-
+Eigen/Core
+-
+Eigen/LU
+-
+Eigen/Eigenvalues
+-
+src/MatrixFunctions/MatrixExponential.h
+/usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixExponential.h
+src/MatrixFunctions/MatrixFunction.h
+/usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixFunction.h
+src/MatrixFunctions/MatrixSquareRoot.h
+/usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixSquareRoot.h
+src/MatrixFunctions/MatrixLogarithm.h
+/usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixLogarithm.h
+src/MatrixFunctions/MatrixPower.h
+/usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixPower.h
+unsupported/Eigen/MatrixFunctions
+-
+iostream
+-
+
+/usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixExponential.h
+StemFunction.h
+/usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/StemFunction.h
+
+/usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixFunction.h
+StemFunction.h
+/usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/StemFunction.h
+
+/usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixLogarithm.h
+
+/usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixPower.h
+
+/usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixSquareRoot.h
+
+/usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/StemFunction.h
 

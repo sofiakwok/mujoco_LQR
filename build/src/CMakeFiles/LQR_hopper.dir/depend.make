@@ -218,4 +218,11 @@ src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: /usr/include/eigen3/Eigen/src/plu
 src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: /usr/include/eigen3/Eigen/src/plugins/CommonCwiseUnaryOps.h
 src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: /usr/include/eigen3/Eigen/src/plugins/MatrixCwiseBinaryOps.h
 src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: /usr/include/eigen3/Eigen/src/plugins/MatrixCwiseUnaryOps.h
+src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: /usr/include/eigen3/unsupported/Eigen/MatrixFunctions
+src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: /usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixExponential.h
+src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: /usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixFunction.h
+src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: /usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixLogarithm.h
+src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: /usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixPower.h
+src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: /usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixSquareRoot.h
+src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: /usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/StemFunction.h
 
