@@ -111,33 +111,6 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset)
     mjv_moveCamera(m, mjMOUSE_ZOOM, 0, -0.05*yoffset, &scn, &cam);
 }
 
-MatrixXd quat_to_euler(mjtNum quat[4]){
-    double x = quat[0];
-    double y = quat[1];
-    double z = quat[2];
-    double w = quat[3];
-    double t0 = 2.0 * (w * x + y * z);
-    double t1 = 1.0 - 2.0 * (x * x + y * y);
-    double roll_x = atan2(t0, t1);
-    
-    double t2 = +2.0 * (w * y - z * x);
-    if (t2 > 1){
-        t2 = 1;
-    } 
-    if (t2 < -1.0){
-        t2 = 1;
-    }
-    double pitch_y = asin(t2);
-    
-    double t3 = +2.0 * (w * z + x * y);
-    double t4 = +1.0 - 2.0 * (y * y + z * z);
-    double yaw_z = atan2(t3, t4);
-
-    Matrix<double, 3, 1> euler = {roll_x, pitch_y, yaw_z};
-    
-    return euler; //in radians
-}
-
 MatrixXd LQR_controller(const mjModel* m, mjData* d)
 {
     // update constants
@@ -243,24 +216,30 @@ void mycontroller(const mjModel* m, mjData* d)
 
     //getting current COM position and velocity
     //body name is not right, need to add a body at COM
-    bodyid = mj_name2id(m, mjOBJ_BODY, "rwz");
+    bodyid = mj_name2id(m, mjOBJ_BODY, "Link 0");
     //gives current body frame orientation as a quaternion in Cartesian coordinates
     mjtNum com_pos[4];
     mju_copy(com_pos, d->xquat + m->jnt_qposadr[m->body_jntadr[bodyid]], 4);
-    //converting to euler angles
-    MatrixXd euler_angles;
-    euler_angles = quat_to_euler(com_pos);
-    cout << "euler angle (x): " << euler_angles(0) << endl;
-    cout << "euler angle (y): " << euler_angles(1) << endl;
-    cout << "euler angle (z): " << euler_angles(2) << endl;
+    //defining reference quaternion (pointing straight up)
+    mjtNum quat_ref[4];
+    quat_ref[0] = 0;
+    quat_ref[1] = 0;
+    quat_ref[2] = 1;
+    quat_ref[3] = 0;
+    //finding difference between reference quaternion and current COM orientation, converting to 3D coordinates
+    mjtNum delta_x[3];
+    mju_subQuat(delta_x, com_pos, quat_ref);
+    cout << "diff angle (x): " << delta_x[0] << endl;
+    cout << "diff angle (y): " << delta_x[1] << endl;
+    cout << "diff angle (z): " << delta_x[2] << endl;
     //velocity data - gives linear velocity followed by angular velocity (# of entries = # of DOF)
     mjtNum com_vel[4];
     mju_copy(com_vel, d->qvel + m->jnt_dofadr[m->body_jntadr[bodyid]], 4);
 
-    /*cout << "com pos (x): " << com_pos[0] << endl;
-    cout << "com pos (y): " << com_pos[1] << endl;
+    cout << "com pos (x): " << delta_x[0] << endl;
+    cout << "com pos (y): " << delta_x[1] << endl;
     cout << "com vel (x): " << com_vel[0] << endl;
-    cout << "com vel (y): " << com_vel[1] << endl;*/
+    cout << "com vel (y): " << com_vel[1] << endl;
 
     //2 = reaction wheel 1 (x)
     actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
@@ -270,7 +249,7 @@ void mycontroller(const mjModel* m, mjData* d)
     xveladr = m->jnt_dofadr[m->body_jntadr[body_rw0]];
     mjtNum xvel = d->qvel[xveladr];
     //cout << "rw (x): " << xvel << endl;
-    state[0] = euler_angles(0) - M_PI_2;
+    state[0] = delta_x[0];
     state[1] = com_vel[0];
     state[2] = xvel;
     mjtNum ctrl = mju_dot(K, state, 1);
@@ -288,7 +267,7 @@ void mycontroller(const mjModel* m, mjData* d)
     yveladr = m->jnt_dofadr[m->body_jntadr[body_rw1]];
     mjtNum yvel = d->qvel[yveladr];
     //cout << "rw (y): " << yvel << endl;
-    state[0] = euler_angles(1) - M_PI_2;
+    state[0] = delta_x[1];
     state[1] = com_vel[1];
     state[2] = yvel;
     ctrl = mju_dot(K, state, 1);
