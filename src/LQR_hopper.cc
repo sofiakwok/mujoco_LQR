@@ -157,13 +157,13 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 1> D = {0, 0, 0};
 
     MatrixXd Q = C_T * C;
-    Q(0, 0) = 1;
+    Q(0, 0) = 100;
     Q(1, 1) = 1;
     Q(2, 2) = 1;
     //cout << "Q: " << Q << endl;
     //this is sus
     Matrix<double, 1, 1> R;
-    R(0, 0) = 10;
+    R(0, 0) = 0.001;
     Matrix3d P = Q;
     MatrixXd K;
     Matrix3d Pn;
@@ -215,31 +215,35 @@ void mycontroller(const mjModel* m, mjData* d)
     d->ctrl[act_leg2] = -2000*d->qpos[m->jnt_qposadr[joint_leg2]] - 5*d->qvel[m->jnt_dofadr[joint_leg2]];
 
     //getting current COM position and velocity
-    //body name is not right, need to add a body at COM
+    //COM position is not right, need to add a body at COM
     bodyid = mj_name2id(m, mjOBJ_BODY, "Link 0");
     //gives current body frame orientation as a quaternion in Cartesian coordinates
     mjtNum com_pos[4];
     mju_copy(com_pos, d->xquat + m->jnt_qposadr[m->body_jntadr[bodyid]], 4);
-    //defining reference quaternion (pointing straight up)
+    //defining reference quaternion (pointing straight up, at (0, 0) where foot contacts ground)
     mjtNum quat_ref[4];
-    quat_ref[0] = 0;
+    quat_ref[0] = 1;
     quat_ref[1] = 0;
-    quat_ref[2] = 1;
+    quat_ref[2] = 0;
     quat_ref[3] = 0;
     //finding difference between reference quaternion and current COM orientation, converting to 3D coordinates
     mjtNum delta_x[3];
     mju_subQuat(delta_x, com_pos, quat_ref);
-    cout << "diff angle (x): " << delta_x[0] << endl;
-    cout << "diff angle (y): " << delta_x[1] << endl;
-    cout << "diff angle (z): " << delta_x[2] << endl;
-    //velocity data - gives linear velocity followed by angular velocity (# of entries = # of DOF)
-    mjtNum com_vel[4];
-    mju_copy(com_vel, d->qvel + m->jnt_dofadr[m->body_jntadr[bodyid]], 4);
+    //velocity data - gives rotational velocity followed by translational velocity (6x1)
+    //finding COM velocity
+    mjtNum com_vel[6];
+    mju_copy(com_vel, d->cvel + m->jnt_qposadr[m->body_jntadr[bodyid]], 6);
 
-    cout << "com pos (x): " << delta_x[0] << endl;
-    cout << "com pos (y): " << delta_x[1] << endl;
-    cout << "com vel (x): " << com_vel[0] << endl;
-    cout << "com vel (y): " << com_vel[1] << endl;
+    /*cout << "com (x): " << com_pos[0] << endl;
+    cout << "com (y): " << com_pos[1] << endl;
+    cout << "com (z): " << com_pos[2] << endl;
+    cout << "com (w): " << com_pos[3] << endl;*/
+    cout << "delta (x): " << delta_x[0] << endl;
+    cout << "delta (y): " << delta_x[1] << endl;
+    cout << "delta (z): " << delta_x[2] << endl;
+    /*cout << "com vel (x): " << com_vel[3] << endl;
+    cout << "com vel (y): " << com_vel[4] << endl;
+    cout << "com vel (z): " << com_vel[5] << endl;*/
 
     //2 = reaction wheel 1 (x)
     actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
@@ -248,16 +252,12 @@ void mycontroller(const mjModel* m, mjData* d)
     int xveladr = -1;
     xveladr = m->jnt_dofadr[m->body_jntadr[body_rw0]];
     mjtNum xvel = d->qvel[xveladr];
-    //cout << "rw (x): " << xvel << endl;
+    //cout << "rw speed (x): " << xvel << endl;
     state[0] = delta_x[0];
-    state[1] = com_vel[0];
+    state[1] = com_vel[3];
     state[2] = xvel;
     mjtNum ctrl = mju_dot(K, state, 1);
-    cout << "control (x): " << ctrl << endl;
-    // clamp controls
-    if (ctrl > 11.24){
-        ctrl = 11.24;
-    }
+    //cout << "control (x): " << ctrl << endl;
     d->ctrl[actuator_no] = -ctrl;
 
     //3 = reaction wheel 2 (y)
@@ -266,16 +266,12 @@ void mycontroller(const mjModel* m, mjData* d)
     int yveladr = -1;
     yveladr = m->jnt_dofadr[m->body_jntadr[body_rw1]];
     mjtNum yvel = d->qvel[yveladr];
-    //cout << "rw (y): " << yvel << endl;
+    //cout << "rw speed (y): " << yvel << endl;
     state[0] = delta_x[1];
-    state[1] = com_vel[1];
+    state[1] = com_vel[4];
     state[2] = yvel;
     ctrl = mju_dot(K, state, 1);
-    cout << "control (y): " << ctrl << endl;
-    //clamping controls 
-    if (ctrl > 11.24){
-        ctrl = 11.24;
-    }
+    //cout << "control (y): " << ctrl << endl;
     d->ctrl[actuator_no] = -ctrl;
 }
 
