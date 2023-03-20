@@ -53,3 +53,51 @@ WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Ti
 Fri Mar 17 14:32:09 2023
 WARNING: Nan, Inf or huge value in CTRL at ACTUATOR 2. The simulation is unstable. Time = 0.0000.
 
+Mon Mar 20 10:46:56 2023
+ERROR: Load model error: Error: mass and inertia of moving bodies must be larger than mjMINVAL
+Object name = COM, id = 2, line = 38, column = -1
+
+Mon Mar 20 10:49:07 2023
+ERROR: Load model error: XML Error: invalid keyword: 'main'
+Element 'joint', line 40
+
+
+Mon Mar 20 10:49:51 2023
+ERROR: Load model error: XML Error: invalid keyword: 'main'
+Element 'joint', line 40
+
+
+Mon Mar 20 10:50:10 2023
+ERROR: Load model error: Error: mass and inertia of moving bodies must be larger than mjMINVAL
+Object name = COM, id = 2, line = 38, column = -1
+
+Mon Mar 20 10:52:28 2023
+ERROR: Load model error: Error: mass and inertia of moving bodies must be larger than mjMINVAL
+Object name = COM, id = 2, line = 38, column = -1
+
+Mon Mar 20 11:04:32 2023
+ERROR: Load model error: XML Error: required attribute missing: 'pos'
+Element 'inertial', line 39
+
+
+Mon Mar 20 11:05:06 2023
+ERROR: Load model error: XML Error: attribute 'pos' does not have enough data
+Element 'inertial', line 39
+
+
+Mon Mar 20 11:05:16 2023
+ERROR: Load model error: Error: sizes must be positive in object '' (id = 3)
+Object name = , id = 3, line = 41, column = -1
+
+Mon Mar 20 11:06:24 2023
+ERROR: Load model error: Error: mass and inertia of moving bodies must be larger than mjMINVAL
+Object name = COM, id = 2, line = 38, column = -1
+
+Mon Mar 20 11:09:41 2023
+ERROR: Load model error: Error: mass and inertia of moving bodies must be larger than mjMINVAL
+Object name = COM, id = 2, line = 38, column = -1
+
+Mon Mar 20 11:15:05 2023
+ERROR: Load model error: Error: mass and inertia of moving bodies must be larger than mjMINVAL
+Object name = COM, id = 2, line = 38, column = -1
+
