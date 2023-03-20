@@ -157,9 +157,9 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 1> D = {0, 0, 0};
 
     MatrixXd Q = C_T * C;
-    Q(0, 0) = 100;
-    Q(1, 1) = 100;
-    Q(2, 2) = 100;
+    Q(0, 0) = 1000;
+    Q(1, 1) = 1;
+    Q(2, 2) = 1;
     //cout << "Q: " << Q << endl;
     //this is sus
     Matrix<double, 1, 1> R;
@@ -221,7 +221,9 @@ void mycontroller(const mjModel* m, mjData* d)
     //gives current body frame orientation as a quaternion in Cartesian coordinates
     mjtNum com_pos[4];
     mju_copy(com_pos, d->xquat + m->jnt_qposadr[m->body_jntadr[bodyid]], 4);
-    //defining reference quaternion (pointing straight up, at (0, 0) where foot contacts ground)
+    mjtNum com_location[3];
+    mju_copy(com_location, d->xpos + m->jnt_qposadr[m->body_jntadr[bodyid]], 3);
+    /*//defining reference quaternion (pointing straight up, at (0, 0) where foot contacts ground)
     mjtNum quat_ref[4];
     quat_ref[0] = 0;
     quat_ref[1] = 0;
@@ -229,19 +231,40 @@ void mycontroller(const mjModel* m, mjData* d)
     quat_ref[3] = 0;
     //finding difference between reference quaternion and current COM orientation, converting to 3D coordinates
     mjtNum delta_x[3];
-    mju_subQuat(delta_x, com_pos, quat_ref);
+    mju_subQuat(delta_x, com_pos, quat_ref);*/
+    //checking this is right
+    cout << com_location[0] << " " << com_location[1] << " " << com_location[2] << endl;
+    //finding angle from z axis for x and y
+    mjtNum angles[3];
+    angles[0] = atan(com_location[0]/(com_location[1]));
+    angles[1] = atan(com_location[2]/(com_location[1]));
+    angles[2] = 0;
+    cout << "angle (x): " << angles[0] << endl;
+    cout << "angle (y): " << angles[1] << endl;
+    //transforming into reaction wheel frames
+    mjtNum reaction_angles[3];
+    mjtNum rotation_matrix[9];
+    mju_zero(rotation_matrix, 9);
+    mjtNum theta_rot = -com_pos[3];
+    rotation_matrix[0] = cos(theta_rot - M_PI/4);
+    rotation_matrix[1] = -sin(theta_rot - M_PI/4);
+    rotation_matrix[3] = sin(theta_rot - M_PI/4);
+    rotation_matrix[4] = cos(theta_rot - M_PI/4);
+    mju_rotVecMat(reaction_angles, angles, rotation_matrix);
     //velocity data - gives rotational velocity followed by translational velocity (6x1)
     //finding COM velocity
     mjtNum com_vel[6];
     mju_copy(com_vel, d->cvel + m->jnt_qposadr[m->body_jntadr[bodyid]], 6);
 
+    cout << "rw (x): " << reaction_angles[0] << endl;
+    cout << "rw (y): " << reaction_angles[1] << endl;
     /*cout << "com (x): " << com_pos[0] << endl;
     cout << "com (y): " << com_pos[1] << endl;
     cout << "com (z): " << com_pos[2] << endl;
-    cout << "com (w): " << com_pos[3] << endl;*/
-    //cout << "delta (x): " << delta_x[0] << endl;
-    //cout << "delta (y): " << delta_x[1] << endl;
-    //cout << "delta (z): " << delta_x[2] << endl;
+    cout << "com (w): " << com_pos[3] << endl;
+    cout << "delta (x): " << delta_x[0] << endl;
+    cout << "delta (y): " << delta_x[1] << endl;
+    cout << "delta (z): " << delta_x[2] << endl;*/
     /*cout << "com vel (x): " << com_vel[3] << endl;
     cout << "com vel (y): " << com_vel[4] << endl;
     cout << "com vel (z): " << com_vel[5] << endl;*/
@@ -254,7 +277,7 @@ void mycontroller(const mjModel* m, mjData* d)
     xveladr = m->jnt_dofadr[m->body_jntadr[body_rw0]];
     mjtNum xvel = d->qvel[xveladr];
     //cout << "rw speed (x): " << xvel << endl;
-    state[0] = delta_x[0] - delta_x[2];
+    state[0] = reaction_angles[0];
     state[1] = com_vel[3];
     state[2] = xvel;
     mjtNum ctrl = mju_dot(K, state, 1);
@@ -268,7 +291,7 @@ void mycontroller(const mjModel* m, mjData* d)
     yveladr = m->jnt_dofadr[m->body_jntadr[body_rw1]];
     mjtNum yvel = d->qvel[yveladr];
     //cout << "rw speed (y): " << yvel << endl;
-    state[0] = delta_x[0] + delta_x[2];
+    state[0] = reaction_angles[1];
     state[1] = com_vel[4];
     state[2] = yvel;
     ctrl = mju_dot(K, state, 1);

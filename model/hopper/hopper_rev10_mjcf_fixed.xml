@@ -24,31 +24,25 @@
     <light cutoff="100" diffuse="1 1 1" dir="-0 0 -1.3" directional="true" exponent="1" pos="0 0 1.3" specular=".1 .1 .1"/>
     <!-- <geom conaffinity="1" condim="3" material="MatPlane" name="floor" pos="0 0 0" rgba="0.8 0.9 0.8 1" size="40 40 40" type="plane"/> -->
     <geom conaffinity="1" condim="3" material="MatPlane" name="floor" pos="0 0 0" rgba="0.8 0.9 0.8 1" size="40 40 40" type="plane" friction="4 0.01 0.01" solimp="8 10 0.001 0.5 2" solref="0.01 0.25"/>
-
     <!-- <body name="base_link" pos="0 0 0.5" quat="1 0 0 0"> -->
     <!-- starts robot on ground-->
-    <body name="base_link" pos="0 0 0.4" quat="1 0 0 0">
+    <body name = "x" pos = "1 0 0" quat = "0 0 1 0">
+        <inertial pos="0 0 0" quat="0.0 0.0 1 0" mass="0.01" diaginertia="1 1 1"/>
+        <joint type = "free"/>
+        <geom type="box" size=".01 .02 .03" rgba="0 .9 0 1"/>
+    </body>
+    <body name="base_link" pos="0 0 0.3" quat="1 0 0 0">
       <site name='imu' size='0.01' pos='0 0 0'/>
       <inertial pos="-0.00418136 0.00001975 0.01669539" quat="1 0 0 0" mass="4.74662308" diaginertia="0.03772045 0.01927139 0.03899715"/>
       <!--ball joint type fixes the robot to the floor, modeling effects of gravity -->
       <!--<joint type="free" stiffness="0" damping="0" frictionloss="0" armature="0"/>-->
-      <joint type = "ball" pos = "0 0 -0.4"/>
+      <joint type = "ball" pos = "0 0 -0.3"/>
       <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.752941 0.752941 0.752941 1" mesh="base_link"/>
       <geom type="mesh" rgba="0.752941 0.752941 0.752941 1" mesh="base_link"/>
-      <body name = "COM" pos = "0 0 0" quat = "0 0 1 0">
-        <inertial pos="0 0 0" quat="0.0 0.0 1 0" mass="0.01" diaginertia="1 1 1"/>
-        <joint type = "slide" pos = "0 0 0" axis="0 0 1"/>
-        <geom type="box" size=".01 .02 .03" rgba="0 .9 0 1"/>
-      </body>
-      <body name = "x" pos = "1 0 0" quat = "0 0 1 0">
-        <inertial pos="0 0 0" quat="0.0 0.0 1 0" mass="0.01" diaginertia="1 1 1"/>
-        <joint type = "slide" pos = "1 0 0" axis="0 0 1"/>
-        <geom type="box" size=".01 .02 .03" rgba="0 .9 0 1"/>
-      </body>
-      <body name = "y" pos = "0 1 0" quat = "0 0 1 0">
-        <inertial pos="0 0 0" quat="0.0 0.0 1 0" mass="0.01" diaginertia="1 1 1"/>
-        <joint type = "slide" pos = "0 1 0" axis="0 0 1"/>
-        <geom type="box" size=".01 .02 .03" rgba="1 .9 0 1"/>
+      <body name = "COM" pos = "0 0 0" quat = "0 1 0 0">
+        <inertial pos="0 0 0" quat="0 0 1 0" mass="0.001" diaginertia="1 1 1"/>
+        <joint type = "slide" pos= "0 0 0" axis="0 0 1"/>
+        <geom type="box" size=".001 .002 .003" rgba="0 .9 0 1"/>
       </body>
       <body name="Link 0" pos="0 0 0" quat="0.965926 0 0.258819 0">
         <site name="tau0"/>
