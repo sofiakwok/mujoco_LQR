@@ -159,7 +159,7 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     MatrixXd Q = C_T * C;
     Q(0, 0) = 10;
     Q(1, 1) = 1;
-    Q(2, 2) = 1;
+    Q(2, 2) = 100;
     //cout << "Q: " << Q << endl;
     //this is sus
     Matrix<double, 1, 1> R;
@@ -239,8 +239,8 @@ void mycontroller(const mjModel* m, mjData* d)
     mju_mulQuat(delta_q, quat_ref, trans_quat);
     //multiplying starting position difference between ref quaternion and current quaternion to find current COM
     mjtNum ref_com[3];
-    ref_com[0] = 0;
-    ref_com[1] = 0;
+    ref_com[0] = 0.02;
+    ref_com[1] = 0.02;
     ref_com[2] = 0.3;
     mjtNum delta_x[3];
     mju_rotVecQuat(delta_x, ref_com, delta_q);
