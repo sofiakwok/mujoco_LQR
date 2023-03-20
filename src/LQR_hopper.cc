@@ -249,37 +249,21 @@ void mycontroller(const mjModel* m, mjData* d)
     angles[0] = atan(delta_x[0]/delta_x[2]);
     angles[1] = atan(delta_x[1]/delta_x[2]);
     angles[2] = 0;
-    cout << "angle (x): " << angles[0] << endl;
-    cout << "angle (y): " << angles[1] << endl;
-    //transforming into reaction wheel frames (need to take rotation from x and y world frame axes into account)
+    //transforming into reaction wheel frame from x and y world frame axes
     mjtNum reaction_angles[3];
     mjtNum rotation_matrix[9];
     mju_zero(rotation_matrix, 9);
     mjtNum theta_rot = trans_quat[3];
-    cout << "rotz: " << theta_rot << endl;
     rotation_matrix[0] = cos(theta_rot - M_PI/4);
     rotation_matrix[1] = -sin(theta_rot - M_PI/4);
     rotation_matrix[3] = sin(theta_rot - M_PI/4);
     rotation_matrix[4] = cos(theta_rot - M_PI/4);
     mju_rotVecMat(reaction_angles, angles, rotation_matrix);
-    //velocity data - gives rotational velocity followed by translational velocity (6x1)
+    //COM velocity data - gives rotational velocity followed by translational velocity (6x1)
     mjtNum com_vel[6];
     mju_copy(com_vel, d->cvel + m->jnt_qposadr[m->body_jntadr[bodyid]], 6);
 
-    /*cout << "rw (x): " << reaction_angles[0] << endl;
-    cout << "rw (y): " << reaction_angles[1] << endl;
-    cout << "com (x): " << com_pos[0] << endl;
-    cout << "com (y): " << com_pos[1] << endl;
-    cout << "com (z): " << com_pos[2] << endl;
-    cout << "com (w): " << com_pos[3] << endl;
-    cout << "delta (x): " << delta_x[0] << endl;
-    cout << "delta (y): " << delta_x[1] << endl;
-    cout << "delta (z): " << delta_x[2] << endl;
-    cout << "com vel (x): " << com_vel[3] << endl;
-    cout << "com vel (y): " << com_vel[4] << endl;
-    cout << "com vel (z): " << com_vel[5] << endl;*/
-
-    //2 = reaction wheel 1 (x)
+    //reaction wheel 1 (x)
     actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
     int body_rw0 = mj_name2id(m, mjOBJ_BODY, "rw0");
     mjtNum state[3];
@@ -291,10 +275,10 @@ void mycontroller(const mjModel* m, mjData* d)
     state[1] = com_vel[3];
     state[2] = xvel;
     mjtNum ctrl = mju_dot(K, state, 1);
-    cout << "control (x): " << ctrl << endl;
+    //cout << "control (x): " << ctrl << endl;
     d->ctrl[actuator_no] = -ctrl;
 
-    //3 = reaction wheel 2 (y)
+    //reaction wheel 2 (y)
     actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
     int body_rw1 = mj_name2id(m, mjOBJ_BODY, "rw1");
     int yveladr = -1;
@@ -305,7 +289,7 @@ void mycontroller(const mjModel* m, mjData* d)
     state[1] = com_vel[4];
     state[2] = yvel;
     ctrl = mju_dot(K, state, 1);
-    cout << "control (y): " << ctrl << endl;
+    //cout << "control (y): " << ctrl << endl;
     d->ctrl[actuator_no] = -ctrl;
 }
 
