@@ -157,13 +157,13 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 1> D = {0, 0, 0};
 
     MatrixXd Q = C_T * C;
-    Q(0, 0) = 10;
-    Q(1, 1) = 1;
+    Q(0, 0) = 100;
+    Q(1, 1) = 100;
     Q(2, 2) = 100;
     //cout << "Q: " << Q << endl;
     //this is sus
     Matrix<double, 1, 1> R;
-    R(0, 0) = 0.001;
+    R(0, 0) = 0.005;
     Matrix3d P = Q;
     MatrixXd K;
     Matrix3d Pn;
@@ -220,6 +220,17 @@ void mycontroller(const mjModel* m, mjData* d)
     //gives current body frame orientation as a quaternion in Cartesian coordinates
     mjtNum com_pos[4];
     mju_copy(com_pos, d->xquat + m->jnt_qposadr[m->body_jntadr[bodyid]], 4);
+    //adding noise to current quaternion orientation (modeling IMU noise)
+    srand(d->time);
+    double noise;
+    noise = (rand() % 9)/100;
+    com_pos[0] += noise;    
+    noise = (rand() % 9)/100;
+    com_pos[1] += noise;
+    noise = (rand() % 9)/100;
+    com_pos[2] += noise;
+    noise = (rand() % 9)/100;
+    com_pos[3] += noise;
     //making body frame orientation in world frame (just rearranges axes)
     mjtNum base_q[4];
     base_q[0] = 0;
@@ -239,9 +250,9 @@ void mycontroller(const mjModel* m, mjData* d)
     mju_mulQuat(delta_q, quat_ref, trans_quat);
     //multiplying starting position difference between ref quaternion and current quaternion to find current COM
     mjtNum ref_com[3];
-    ref_com[0] = 0.02;
-    ref_com[1] = 0.02;
-    ref_com[2] = 0.3;
+    ref_com[0] = 0.1;
+    ref_com[1] = 0.1;
+    ref_com[2] = 1;
     mjtNum delta_x[3];
     mju_rotVecQuat(delta_x, ref_com, delta_q);
     //finding angle from z axis for x and y
