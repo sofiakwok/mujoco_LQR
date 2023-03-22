@@ -46,6 +46,9 @@ mjtNum ctrl;
 // time-invariant K
 double K[3] = {0, 0, 0};
 
+//last control output
+double control[2] = {0, 0};
+
 // keyboard callback
 void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods)
 {
@@ -157,8 +160,8 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 1> D = {0, 0, 0};
 
     MatrixXd Q = C_T * C;
-    Q(0, 0) = 100;
-    Q(1, 1) = 100;
+    Q(0, 0) = 10;
+    Q(1, 1) = 1;
     Q(2, 2) = 100;
     //cout << "Q: " << Q << endl;
     //this is sus
@@ -291,8 +294,9 @@ void mycontroller(const mjModel* m, mjData* d)
     mjtNum ctrl = mju_dot(K, state, 1);
     noise = (rand() % 9)/1000;
     //cout << "control (x): " << ctrl << endl;
-    d->ctrl[actuator_no] = -ctrl + noise;
-
+    d->ctrl[actuator_no] = control[0];
+    control[0] = -ctrl + noise;
+    
     //reaction wheel 2 (y)
     actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
     int body_rw1 = mj_name2id(m, mjOBJ_BODY, "rw1");
@@ -306,7 +310,8 @@ void mycontroller(const mjModel* m, mjData* d)
     ctrl = mju_dot(K, state, 1);
     noise = (rand() % 9)/1000;
     //cout << "control (y): " << ctrl << endl;
-    d->ctrl[actuator_no] = -ctrl + noise;
+    d->ctrl[actuator_no] = control[1];
+    control[1] = -ctrl + noise;
 }
 
 // main function
@@ -379,12 +384,8 @@ int main(int argc, const char** argv)
         //  this loop will finish on time for the next frame to be rendered at 60 fps.
         //  Otherwise add a cpu timer and exit this loop when it is time to render.
         mjtNum simstart = d->time;
-        int counter = 0;
-        while( d->time - simstart < 1.0/60.0 )
+        while(d->time - simstart < 1.0/60.0)
         {
-            counter += 1;
-            cout << counter << endl;
-            sleep(0.1);
             mj_step(m, d);
         }
 
