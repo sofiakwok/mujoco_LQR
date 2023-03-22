@@ -219,10 +219,13 @@ void mycontroller(const mjModel* m, mjData* d)
 
     //getting current COM position and velocity
     //COM position is not right, need to add a body at COM
-    bodyid = mj_name2id(m, mjOBJ_BODY, "Link 0");
+    bodyid = mj_name2id(m, mjOBJ_SITE, "imu");
     //gives current body frame orientation as a quaternion in Cartesian coordinates
+    mjtNum com_mat[9];
     mjtNum com_pos[4];
-    mju_copy(com_pos, d->xquat + m->jnt_qposadr[m->body_jntadr[bodyid]], 4);
+    mju_copy(com_mat, d->site_xmat, 9);
+    mju_mat2Quat(com_pos, com_mat);
+    //cout << "com pos: " << com_pos[0] << " " << com_pos[1] << " " << com_pos[2] << " " << com_pos[3] << endl;
     //adding noise to current quaternion orientation (modeling IMU noise)
     srand(d->time);
     double noise;
@@ -242,6 +245,7 @@ void mycontroller(const mjModel* m, mjData* d)
     base_q[3] = 0;
     mjtNum trans_quat[4];
     mju_mulQuat(trans_quat, base_q, com_pos);
+    //cout << "rot pos: " << trans_quat[0] << " " << trans_quat[1] << " " << trans_quat[2] << " " << trans_quat[3] << endl;
     //defining reference quaternion (pointing straight up from (0, 0) where foot contacts ground)
     mjtNum quat_ref[4];
     quat_ref[0] = 0;
@@ -253,11 +257,15 @@ void mycontroller(const mjModel* m, mjData* d)
     mju_mulQuat(delta_q, quat_ref, trans_quat);
     //multiplying starting position difference between ref quaternion and current quaternion to find current COM
     mjtNum ref_com[3];
-    ref_com[0] = 0.1;
-    ref_com[1] = 0.1;
-    ref_com[2] = 1;
+    ref_com[0] = 0;
+    ref_com[1] = 0;
+    ref_com[2] = 0.3;
     mjtNum delta_x[3];
     mju_rotVecQuat(delta_x, ref_com, delta_q);
+    //cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
+    mjtNum com_realpos[3];
+    mju_copy(com_realpos, d->site_xpos, 3);
+    //cout << "com real pos: " << com_realpos[0] <<  " " << com_realpos[1] << " " << com_realpos[2] << endl;
     //finding angle from z axis for x and y
     mjtNum angles[3];
     angles[0] = atan(delta_x[0]/delta_x[2]);
@@ -275,7 +283,7 @@ void mycontroller(const mjModel* m, mjData* d)
     mju_rotVecMat(reaction_angles, angles, rotation_matrix);
     //COM velocity data - gives rotational velocity followed by translational velocity (6x1)
     mjtNum com_vel[6];
-    mju_copy(com_vel, d->cvel + m->jnt_qposadr[m->body_jntadr[bodyid]], 6);
+    //mju_copy(com_vel, d->cvel + m->jnt_qposadr[m->body_jntadr[bodyid]], 6);
 
     //adding in simulated lag
     int lag = rand();
@@ -312,6 +320,8 @@ void mycontroller(const mjModel* m, mjData* d)
     //cout << "control (y): " << ctrl << endl;
     d->ctrl[actuator_no] = control[1];
     control[1] = -ctrl + noise;
+
+    
 }
 
 // main function
