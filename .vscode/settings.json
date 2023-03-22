@@ -4,6 +4,7 @@
         "ostream": "cpp",
         "cmath": "cpp",
         "complex": "cpp",
-        "matrixfunctions": "cpp"
+        "matrixfunctions": "cpp",
+        "chrono": "cpp"
     }
 }

@@ -13,7 +13,8 @@
 #include <Eigen/SVD>
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
-// #include <lapack>
+#include <chrono>
+
 using namespace std;
 using namespace Eigen;
 
@@ -48,6 +49,9 @@ double K[3] = {0, 0, 0};
 
 //last control output
 double control[2] = {0, 0};
+
+int counter = 0;
+
 
 // keyboard callback
 void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods)
@@ -206,8 +210,112 @@ void set_position_servo(const mjModel* m, int actuator_no, double kp)
 
 void mycontroller(const mjModel* m, mjData* d)
 {
-    int actuator_no;
-    int bodyid;
+    //running controller at 200 Hz
+    if (counter % 5 == 0) {
+        int actuator_no;
+        int bodyid;
+
+        //getting current COM position and velocity
+        //COM position is not right, need to add a body at COM
+        bodyid = mj_name2id(m, mjOBJ_SITE, "imu");
+        //gives current body frame orientation as a quaternion in Cartesian coordinates
+        mjtNum com_mat[9];
+        mjtNum com_pos[4];
+        mju_copy(com_mat, d->site_xmat, 9);
+        mju_mat2Quat(com_pos, com_mat);
+        //cout << "com pos: " << com_pos[0] << " " << com_pos[1] << " " << com_pos[2] << " " << com_pos[3] << endl;
+        //adding noise to current quaternion orientation (modeling IMU noise)
+        srand(d->time);
+        double noise;
+        noise = (rand() % 9)/1000;
+        com_pos[0] += noise;    
+        noise = (rand() % 9)/1000;
+        com_pos[1] += noise;
+        noise = (rand() % 9)/1000;
+        com_pos[2] += noise;
+        noise = (rand() % 9)/1000;
+        com_pos[3] += noise;
+        //making body frame orientation in world frame (just rearranges axes)
+        mjtNum base_q[4];
+        base_q[0] = 0;
+        base_q[1] = 0;
+        base_q[2] = 1;
+        base_q[3] = 0;
+        mjtNum trans_quat[4];
+        mju_mulQuat(trans_quat, base_q, com_pos);
+        //cout << "rot pos: " << trans_quat[0] << " " << trans_quat[1] << " " << trans_quat[2] << " " << trans_quat[3] << endl;
+        //defining reference quaternion (pointing straight up from (0, 0) where foot contacts ground)
+        mjtNum quat_ref[4];
+        quat_ref[0] = 0;
+        quat_ref[1] = 0;
+        quat_ref[2] = 1;
+        quat_ref[3] = 0;
+        //finding difference between reference quaternion and current COM orientation
+        mjtNum delta_q[4];
+        mju_mulQuat(delta_q, quat_ref, trans_quat);
+        //multiplying starting position difference between ref quaternion and current quaternion to find current COM
+        mjtNum ref_com[3];
+        ref_com[0] = 0;
+        ref_com[1] = 0;
+        ref_com[2] = 0.3;
+        mjtNum delta_x[3];
+        mju_rotVecQuat(delta_x, ref_com, delta_q);
+        //cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
+        mjtNum com_realpos[3];
+        mju_copy(com_realpos, d->site_xpos, 3);
+        //cout << "com real pos: " << com_realpos[0] <<  " " << com_realpos[1] << " " << com_realpos[2] << endl;
+        //finding angle from z axis for x and y
+        mjtNum angles[3];
+        angles[0] = atan(delta_x[0]/delta_x[2]);
+        angles[1] = atan(delta_x[1]/delta_x[2]);
+        angles[2] = 0;
+        //transforming into reaction wheel frame from x and y world frame axes
+        mjtNum reaction_angles[3];
+        mjtNum rotation_matrix[9];
+        mju_zero(rotation_matrix, 9);
+        mjtNum theta_rot = trans_quat[3];
+        rotation_matrix[0] = cos(theta_rot - M_PI/4);
+        rotation_matrix[1] = -sin(theta_rot - M_PI/4);
+        rotation_matrix[3] = sin(theta_rot - M_PI/4);
+        rotation_matrix[4] = cos(theta_rot - M_PI/4);
+        mju_rotVecMat(reaction_angles, angles, rotation_matrix);
+        //COM velocity data - gives rotational velocity followed by translational velocity (6x1)
+        mjtNum com_vel[6];
+        //mju_copy(com_vel, d->cvel + m->jnt_qposadr[m->body_jntadr[bodyid]], 6);
+
+        //reaction wheel 1 (x)
+        actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
+        int body_rw0 = mj_name2id(m, mjOBJ_BODY, "rw0");
+        mjtNum state[3];
+        int xveladr = -1;
+        xveladr = m->jnt_dofadr[m->body_jntadr[body_rw0]];
+        mjtNum xvel = d->qvel[xveladr];
+        cout << "rw speed (x): " << xvel << endl;
+        state[0] = reaction_angles[0];
+        state[1] = com_vel[3];
+        state[2] = xvel;
+        mjtNum ctrl = mju_dot(K, state, 1);
+        noise = (rand() % 9)/1000;
+        //cout << "control (x): " << ctrl << endl;
+        d->ctrl[actuator_no] = control[0];
+        control[0] = -ctrl + noise;
+        
+        //reaction wheel 2 (y)
+        actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
+        int body_rw1 = mj_name2id(m, mjOBJ_BODY, "rw1");
+        int yveladr = -1;
+        yveladr = m->jnt_dofadr[m->body_jntadr[body_rw1]];
+        mjtNum yvel = d->qvel[yveladr];
+        cout << "rw speed (y): " << yvel << endl;
+        state[0] = reaction_angles[1];
+        state[1] = com_vel[4];
+        state[2] = yvel;
+        ctrl = mju_dot(K, state, 1);
+        noise = (rand() % 9)/1000;
+        //cout << "control (y): " << ctrl << endl;
+        d->ctrl[actuator_no] = control[1];
+        control[1] = -ctrl + noise;
+    }
 
     //fix leg angles 
     int joint_leg0 = mj_name2id(m, mjOBJ_JOINT, "Joint 0");
@@ -216,112 +324,10 @@ void mycontroller(const mjModel* m, mjData* d)
     int joint_leg2 = mj_name2id(m, mjOBJ_JOINT, "Joint 2");
     int act_leg2 = mj_name2id(m, mjOBJ_ACTUATOR, "q2");
     d->ctrl[act_leg2] = -2000*d->qpos[m->jnt_qposadr[joint_leg2]] - 5*d->qvel[m->jnt_dofadr[joint_leg2]];
+    //cout << d->qpos[m->jnt_qposadr[joint_leg0]] << endl;
 
-    //getting current COM position and velocity
-    //COM position is not right, need to add a body at COM
-    bodyid = mj_name2id(m, mjOBJ_SITE, "imu");
-    //gives current body frame orientation as a quaternion in Cartesian coordinates
-    mjtNum com_mat[9];
-    mjtNum com_pos[4];
-    mju_copy(com_mat, d->site_xmat, 9);
-    mju_mat2Quat(com_pos, com_mat);
-    //cout << "com pos: " << com_pos[0] << " " << com_pos[1] << " " << com_pos[2] << " " << com_pos[3] << endl;
-    //adding noise to current quaternion orientation (modeling IMU noise)
-    srand(d->time);
-    double noise;
-    noise = (rand() % 9)/1000;
-    com_pos[0] += noise;    
-    noise = (rand() % 9)/1000;
-    com_pos[1] += noise;
-    noise = (rand() % 9)/1000;
-    com_pos[2] += noise;
-    noise = (rand() % 9)/1000;
-    com_pos[3] += noise;
-    //making body frame orientation in world frame (just rearranges axes)
-    mjtNum base_q[4];
-    base_q[0] = 0;
-    base_q[1] = 0;
-    base_q[2] = 1;
-    base_q[3] = 0;
-    mjtNum trans_quat[4];
-    mju_mulQuat(trans_quat, base_q, com_pos);
-    //cout << "rot pos: " << trans_quat[0] << " " << trans_quat[1] << " " << trans_quat[2] << " " << trans_quat[3] << endl;
-    //defining reference quaternion (pointing straight up from (0, 0) where foot contacts ground)
-    mjtNum quat_ref[4];
-    quat_ref[0] = 0;
-    quat_ref[1] = 0;
-    quat_ref[2] = 1;
-    quat_ref[3] = 0;
-    //finding difference between reference quaternion and current COM orientation
-    mjtNum delta_q[4];
-    mju_mulQuat(delta_q, quat_ref, trans_quat);
-    //multiplying starting position difference between ref quaternion and current quaternion to find current COM
-    mjtNum ref_com[3];
-    ref_com[0] = 0;
-    ref_com[1] = 0;
-    ref_com[2] = 0.3;
-    mjtNum delta_x[3];
-    mju_rotVecQuat(delta_x, ref_com, delta_q);
-    //cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
-    mjtNum com_realpos[3];
-    mju_copy(com_realpos, d->site_xpos, 3);
-    //cout << "com real pos: " << com_realpos[0] <<  " " << com_realpos[1] << " " << com_realpos[2] << endl;
-    //finding angle from z axis for x and y
-    mjtNum angles[3];
-    angles[0] = atan(delta_x[0]/delta_x[2]);
-    angles[1] = atan(delta_x[1]/delta_x[2]);
-    angles[2] = 0;
-    //transforming into reaction wheel frame from x and y world frame axes
-    mjtNum reaction_angles[3];
-    mjtNum rotation_matrix[9];
-    mju_zero(rotation_matrix, 9);
-    mjtNum theta_rot = trans_quat[3];
-    rotation_matrix[0] = cos(theta_rot - M_PI/4);
-    rotation_matrix[1] = -sin(theta_rot - M_PI/4);
-    rotation_matrix[3] = sin(theta_rot - M_PI/4);
-    rotation_matrix[4] = cos(theta_rot - M_PI/4);
-    mju_rotVecMat(reaction_angles, angles, rotation_matrix);
-    //COM velocity data - gives rotational velocity followed by translational velocity (6x1)
-    mjtNum com_vel[6];
-    //mju_copy(com_vel, d->cvel + m->jnt_qposadr[m->body_jntadr[bodyid]], 6);
+    counter += 1;
 
-    //adding in simulated lag
-    int lag = rand();
-
-    //reaction wheel 1 (x)
-    actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
-    int body_rw0 = mj_name2id(m, mjOBJ_BODY, "rw0");
-    mjtNum state[3];
-    int xveladr = -1;
-    xveladr = m->jnt_dofadr[m->body_jntadr[body_rw0]];
-    mjtNum xvel = d->qvel[xveladr];
-    //cout << "rw speed (x): " << xvel << endl;
-    state[0] = reaction_angles[0];
-    state[1] = com_vel[3];
-    state[2] = xvel;
-    mjtNum ctrl = mju_dot(K, state, 1);
-    noise = (rand() % 9)/1000;
-    //cout << "control (x): " << ctrl << endl;
-    d->ctrl[actuator_no] = control[0];
-    control[0] = -ctrl + noise;
-    
-    //reaction wheel 2 (y)
-    actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
-    int body_rw1 = mj_name2id(m, mjOBJ_BODY, "rw1");
-    int yveladr = -1;
-    yveladr = m->jnt_dofadr[m->body_jntadr[body_rw1]];
-    mjtNum yvel = d->qvel[yveladr];
-    //cout << "rw speed (y): " << yvel << endl;
-    state[0] = reaction_angles[1];
-    state[1] = com_vel[4];
-    state[2] = yvel;
-    ctrl = mju_dot(K, state, 1);
-    noise = (rand() % 9)/1000;
-    //cout << "control (y): " << ctrl << endl;
-    d->ctrl[actuator_no] = control[1];
-    control[1] = -ctrl + noise;
-
-    
 }
 
 // main function
