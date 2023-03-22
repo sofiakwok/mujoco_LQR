@@ -1,6 +1,6 @@
 #include <stdbool.h> //for bool
 #include <iostream>
-//#include<unistd.h> //for usleep
+#include <unistd.h> //for usleep
 #include <math.h>
 #include <cmath>
 
@@ -274,6 +274,9 @@ void mycontroller(const mjModel* m, mjData* d)
     mjtNum com_vel[6];
     mju_copy(com_vel, d->cvel + m->jnt_qposadr[m->body_jntadr[bodyid]], 6);
 
+    //adding in simulated lag
+    int lag = rand();
+
     //reaction wheel 1 (x)
     actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
     int body_rw0 = mj_name2id(m, mjOBJ_BODY, "rw0");
@@ -376,8 +379,12 @@ int main(int argc, const char** argv)
         //  this loop will finish on time for the next frame to be rendered at 60 fps.
         //  Otherwise add a cpu timer and exit this loop when it is time to render.
         mjtNum simstart = d->time;
+        int counter = 0;
         while( d->time - simstart < 1.0/60.0 )
         {
+            counter += 1;
+            cout << counter << endl;
+            sleep(0.1);
             mj_step(m, d);
         }
 
