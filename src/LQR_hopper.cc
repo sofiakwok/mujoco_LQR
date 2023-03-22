@@ -281,7 +281,7 @@ void mycontroller(const mjModel* m, mjData* d)
         mju_rotVecMat(reaction_angles, angles, rotation_matrix);
         //COM velocity data - gives rotational velocity followed by translational velocity (6x1)
         mjtNum com_vel[6];
-        //mju_copy(com_vel, d->cvel + m->jnt_qposadr[m->body_jntadr[bodyid]], 6);
+        mju_copy(com_vel, d->cvel, 6);
 
         //reaction wheel 1 (x)
         actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
@@ -324,10 +324,8 @@ void mycontroller(const mjModel* m, mjData* d)
     int joint_leg2 = mj_name2id(m, mjOBJ_JOINT, "Joint 2");
     int act_leg2 = mj_name2id(m, mjOBJ_ACTUATOR, "q2");
     d->ctrl[act_leg2] = -2000*d->qpos[m->jnt_qposadr[joint_leg2]] - 5*d->qvel[m->jnt_dofadr[joint_leg2]];
-    //cout << d->qpos[m->jnt_qposadr[joint_leg0]] << endl;
 
     counter += 1;
-
 }
 
 // main function
@@ -405,7 +403,7 @@ int main(int argc, const char** argv)
             mj_step(m, d);
         }
 
-       // get framebuffer viewport
+        //get framebuffer viewport
         mjrRect viewport = {0, 0, 0, 0};
         glfwGetFramebufferSize(window, &viewport.width, &viewport.height);
 
