@@ -223,13 +223,13 @@ void mycontroller(const mjModel* m, mjData* d)
     //adding noise to current quaternion orientation (modeling IMU noise)
     srand(d->time);
     double noise;
-    noise = (rand() % 9)/100;
+    noise = (rand() % 9)/1000;
     com_pos[0] += noise;    
-    noise = (rand() % 9)/100;
+    noise = (rand() % 9)/1000;
     com_pos[1] += noise;
-    noise = (rand() % 9)/100;
+    noise = (rand() % 9)/1000;
     com_pos[2] += noise;
-    noise = (rand() % 9)/100;
+    noise = (rand() % 9)/1000;
     com_pos[3] += noise;
     //making body frame orientation in world frame (just rearranges axes)
     mjtNum base_q[4];
@@ -286,8 +286,9 @@ void mycontroller(const mjModel* m, mjData* d)
     state[1] = com_vel[3];
     state[2] = xvel;
     mjtNum ctrl = mju_dot(K, state, 1);
+    noise = (rand() % 9)/1000;
     //cout << "control (x): " << ctrl << endl;
-    d->ctrl[actuator_no] = -ctrl;
+    d->ctrl[actuator_no] = -ctrl + noise;
 
     //reaction wheel 2 (y)
     actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
@@ -300,8 +301,9 @@ void mycontroller(const mjModel* m, mjData* d)
     state[1] = com_vel[4];
     state[2] = yvel;
     ctrl = mju_dot(K, state, 1);
+    noise = (rand() % 9)/1000;
     //cout << "control (y): " << ctrl << endl;
-    d->ctrl[actuator_no] = -ctrl;
+    d->ctrl[actuator_no] = -ctrl + noise;
 }
 
 // main function
