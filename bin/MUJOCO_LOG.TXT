@@ -219,3 +219,24 @@ WARNING: Nan, Inf or huge value in QVEL at DOF 3. The simulation is unstable. Ti
 Wed Mar 22 17:17:25 2023
 WARNING: Nan, Inf or huge value in QVEL at DOF 9. The simulation is unstable. Time = 0.4100.
 
+Thu Mar 23 13:32:54 2023
+WARNING: Nan, Inf or huge value in CTRL at ACTUATOR 2. The simulation is unstable. Time = 0.0000.
+
+Thu Mar 23 13:33:20 2023
+WARNING: Nan, Inf or huge value in CTRL at ACTUATOR 2. The simulation is unstable. Time = 0.0000.
+
+Thu Mar 23 13:34:42 2023
+WARNING: Nan, Inf or huge value in CTRL at ACTUATOR 2. The simulation is unstable. Time = 0.0000.
+
+Thu Mar 23 13:35:35 2023
+WARNING: Nan, Inf or huge value in CTRL at ACTUATOR 2. The simulation is unstable. Time = 0.0000.
+
+Thu Mar 23 13:36:01 2023
+WARNING: Nan, Inf or huge value in CTRL at ACTUATOR 2. The simulation is unstable. Time = 0.0000.
+
+Thu Mar 23 13:36:34 2023
+WARNING: Nan, Inf or huge value in CTRL at ACTUATOR 2. The simulation is unstable. Time = 0.0000.
+
+Thu Mar 23 13:45:17 2023
+WARNING: Nan, Inf or huge value in CTRL at ACTUATOR 2. The simulation is unstable. Time = 0.0000.
+
