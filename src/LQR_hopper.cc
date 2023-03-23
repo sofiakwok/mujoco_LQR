@@ -164,9 +164,9 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 1> D = {0, 0, 0};
 
     MatrixXd Q = C_T * C;
-    Q(0, 0) = 10;
-    Q(1, 1) = 1;
-    Q(2, 2) = 100;
+    Q(0, 0) = 100;
+    Q(1, 1) = 10;
+    Q(2, 2) = 1000;
     //cout << "Q: " << Q << endl;
     //this is sus
     Matrix<double, 1, 1> R;
@@ -225,9 +225,9 @@ void mycontroller(const mjModel* m, mjData* d)
         mju_mat2Quat(com_pos, com_mat);
         cout << "com quat: " << com_pos[0] << " " << com_pos[1] << " " << com_pos[2] << " " << com_pos[3] << endl;
         //adding noise to current quaternion orientation (modeling IMU noise)
+        
         double noise;
         /*srand(d->time);
-        
         noise = (rand() % 9)/1000;
         com_pos[0] += noise;    
         noise = (rand() % 9)/1000;
@@ -237,33 +237,13 @@ void mycontroller(const mjModel* m, mjData* d)
         noise = (rand() % 9)/1000;
         com_pos[3] += noise;
         */
-        //making body frame orientation in world frame (just rearranges axes)
-        mjtNum base_q[4];
-        base_q[0] = 0;
-        base_q[1] = 0;
-        base_q[2] = 1;
-        base_q[3] = 0;
-        mjtNum trans_quat[4];
-        mju_mulQuat(trans_quat, base_q, com_pos);
-        cout << "rot pos: " << trans_quat[0] << " " << trans_quat[1] << " " << trans_quat[2] << " " << trans_quat[3] << endl;
-
-        mjtNum quat_ref[4];
-        quat_ref[0] = 0;
-        quat_ref[1] = 0;
-        quat_ref[2] = 1;
-        quat_ref[3] = 0;
-        //finding difference between reference quaternion and current COM orientation
-        mjtNum delta_q[4];
-        mju_mulQuat(delta_q, quat_ref, trans_quat);
-        cout << delta_q[0] <<  " " << delta_q[1] << " " << delta_q[2] <<  " " << delta_q[3] << endl;
-
         //multiplying starting position difference between ref position and current quaternion to find current COM
         mjtNum ref_com[3];
         ref_com[0] = 0;
         ref_com[1] = 0;
         ref_com[2] = 0.3;
         mjtNum delta_x[3];
-        mju_rotVecQuat(delta_x, ref_com, delta_q);
+        mju_rotVecQuat(delta_x, ref_com, com_pos);
         cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
 
         mjtNum com_realpos[3];
@@ -278,7 +258,7 @@ void mycontroller(const mjModel* m, mjData* d)
         mjtNum reaction_angles[3];
         mjtNum rotation_matrix[9];
         mju_zero(rotation_matrix, 9);
-        mjtNum theta_rot = trans_quat[3];
+        mjtNum theta_rot = acos(com_pos[0])*2;
         rotation_matrix[0] = cos(theta_rot - M_PI/4);
         rotation_matrix[1] = -sin(theta_rot - M_PI/4);
         rotation_matrix[3] = sin(theta_rot - M_PI/4);
@@ -295,14 +275,14 @@ void mycontroller(const mjModel* m, mjData* d)
         int xveladr = -1;
         xveladr = m->jnt_dofadr[m->body_jntadr[body_rw0]];
         mjtNum xvel = d->qvel[xveladr];
-        //cout << "rw speed (x): " << xvel << endl;
+        cout << "rw speed (x): " << xvel << endl;
         state[0] = reaction_angles[0];
         state[1] = com_vel[3];
         state[2] = xvel;
         mjtNum ctrl = mju_dot(K, state, 1);
         noise = 0;//(rand() % 9)/1000;
         //cout << "control (x): " << ctrl << endl;
-        d->ctrl[actuator_no] = -ctrl + noise;
+        d->ctrl[actuator_no] = -ctrl; //-ctrl + noise;
         
         //reaction wheel 2 (y)
         actuator_no = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
@@ -310,14 +290,14 @@ void mycontroller(const mjModel* m, mjData* d)
         int yveladr = -1;
         yveladr = m->jnt_dofadr[m->body_jntadr[body_rw1]];
         mjtNum yvel = d->qvel[yveladr];
-        //cout << "rw speed (y): " << yvel << endl;
+        cout << "rw speed (y): " << yvel << endl;
         state[0] = reaction_angles[1];
         state[1] = com_vel[4];
         state[2] = yvel;
         ctrl = mju_dot(K, state, 1);
         noise = 0;//(rand() % 9)/1000;
         //cout << "control (y): " << ctrl << endl;
-        d->ctrl[actuator_no] = -ctrl + noise;
+        d->ctrl[actuator_no] = -ctrl; //-ctrl + noise;
     }
 
     //fix leg angles 
@@ -351,18 +331,19 @@ int main(int argc, const char** argv)
     // make data
     d = mj_makeData(m);
 
-    mjtNum theta = 0.17453; //10 degrees
+    mjtNum theta = 0.17453/1.5; //10 degrees
     
     //change first 7 values of d to change starting position of hopper
     //changing xyz position
-    d->qpos[0] = 0;
+    //*
+    d->qpos[0] = 0.3*sin(theta);
     d->qpos[1] = 0;//0.3*sin(theta);
     d->qpos[2] = 0.3*cos(theta);
     //changing quaternion 
-    d->qpos[3] = cos(theta);
-    d->qpos[4] = 0;
+    d->qpos[3] = cos(theta/2);
+    d->qpos[4] = -sin(theta/2);
     d->qpos[5] = 0;
-    d->qpos[6] = sin(theta);
+    d->qpos[6] = 0;//*/
 
     // init GLFW
     if( !glfwInit() )
@@ -412,10 +393,13 @@ int main(int argc, const char** argv)
         //  this loop will finish on time for the next frame to be rendered at 60 fps.
         //  Otherwise add a cpu timer and exit this loop when it is time to render.
         mjtNum simstart = d->time;
+        //mj_forward(m, d);
+        
+        ///*
         while(d->time - simstart < 1.0/60.0)
         {
             mj_step(m, d);
-        }
+        }//*/
 
         //get framebuffer viewport
         mjrRect viewport = {0, 0, 0, 0};
