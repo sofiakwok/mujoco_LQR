@@ -164,9 +164,9 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 1> D = {0, 0, 0};
 
     MatrixXd Q = C_T * C;
-    Q(0, 0) = 100;
+    Q(0, 0) = 10;
     Q(1, 1) = 1;
-    Q(2, 2) = 100;
+    Q(2, 2) = 1;
     //cout << "Q: " << Q << endl;
     //this is sus
     Matrix<double, 1, 1> R;
@@ -223,7 +223,7 @@ void mycontroller(const mjModel* m, mjData* d)
         mjtNum com_pos[4];
         mju_copy(com_mat, d->site_xmat, 9);
         mju_mat2Quat(com_pos, com_mat);
-        //cout << "com quat: " << com_pos[0] << " " << com_pos[1] << " " << com_pos[2] << " " << com_pos[3] << endl;
+        cout << "com quat: " << com_pos[0] << " " << com_pos[1] << " " << com_pos[2] << " " << com_pos[3] << endl;
         //adding noise to current quaternion orientation (modeling IMU noise)
         
         double noise;
@@ -245,10 +245,6 @@ void mycontroller(const mjModel* m, mjData* d)
         mjtNum delta_x[3];
         mju_rotVecQuat(delta_x, ref_com, com_pos);
         //cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
-
-        mjtNum com_realpos[3];
-        mju_copy(com_realpos, d->site_xpos, 3);
-        //cout << "com real pos: " << com_realpos[0] <<  " " << com_realpos[1] << " " << com_realpos[2] << endl;
         //finding angle from z axis for x and y
         mjtNum angles[3];
         angles[0] = atan(delta_x[0]/delta_x[2]);
@@ -265,45 +261,59 @@ void mycontroller(const mjModel* m, mjData* d)
         rotation_matrix[4] = cos(theta_rot - M_PI/4);
         mju_rotVecMat(reaction_angles, angles, rotation_matrix);
         //COM velocity data - gives rotational velocity followed by translational velocity (6x1)
-        mjtNum com_vel[6];
-        mju_copy(com_vel, d->cvel, 6);
+        mjtNum com_vel[3];
+        mjtNum vel_angles[3];
+        bodyid = mj_name2id(m, mjOBJ_BODY, "base_link");
+        mju_copy(com_vel, d->qvel + bodyid, 3);
+        mju_rotVecMat(vel_angles, com_vel, rotation_matrix);
 
         //reaction wheel 1 (x)
         int actuator_x = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
         int body_rw0 = mj_name2id(m, mjOBJ_BODY, "rw0");
         mjtNum state[3];
         mjtNum xvel = d->actuator_velocity[actuator_x];
+        cout << "x angle: " << reaction_angles[0] << endl;
+        cout << "x speed: " << vel_angles[0] << endl;
         cout << "rw speed (x): " << xvel << endl;
         state[0] = reaction_angles[0];
-        state[1] = com_vel[3];
+        state[1] = vel_angles[0];
         state[2] = xvel;
-        mjtNum ctrl_x = mju_dot(K, state, 1);
+        mjtNum ctrl_x = mju_dot3(K, state);
         noise = 0;//(rand() % 9)/1000;
         cout << "control (x): " << -ctrl_x << endl;
-        /*if (abs(ctrl) > 1){
-            ctrl = 1 * (1 - 2*signbit(ctrl));
-        }*/
+        int cap = 1;
+        if (abs(ctrl_x) > cap){
+            ctrl_x = cap * (1 - 2*signbit(ctrl_x));
+        }
+        cout << "capped control: " << -ctrl_x << endl;
+        d->ctrl[actuator_x] = -ctrl_x;
 
         //reaction wheel 2 (y)
         int actuator_y = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
         int body_rw1 = mj_name2id(m, mjOBJ_BODY, "rw1");
         int yveladr = -1;
         mjtNum yvel = d->actuator_velocity[actuator_y];
+        cout << "y angle: " << reaction_angles[1] << endl;
+        cout << "y speed: " << vel_angles[1] << endl;
         cout << "rw speed (y): " << yvel << endl;
         state[0] = reaction_angles[1];
-        state[1] = com_vel[4];
+        state[1] = vel_angles[1];
         state[2] = yvel;
-        mjtNum ctrl_y = mju_dot(K, state, 1);
+        mjtNum ctrl_y = mju_dot3(K, state);
         noise = 0;//(rand() % 9)/1000;
         cout << "control (y): " << -ctrl_y << endl;
-        /*if (abs(ctrl) > 1){
-            ctrl = 1 * (1 - 2*signbit(ctrl));
-        }*/
+        if (abs(ctrl_y) > cap){
+            ctrl_y = cap * (1 - 2*signbit(ctrl_y));
+        }
+        cout << "capped control: " << -ctrl_y << endl;
+        d->ctrl[actuator_y] = -ctrl_y;
 
-        mjtNum ctrl = abs(ctrl_x - ctrl_y);
+        cout << K[0] << " " << K[1] << " " << K[2] << endl;
 
-        d->ctrl[actuator_x] = -ctrl_x + 0.5*(-1 + 2*signbit(ctrl_x))*-ctrl; //-ctrl + noise;
-        d->ctrl[actuator_y] = -ctrl_y + 0.5*(-1 + 2*signbit(ctrl_x))*-ctrl; //-ctrl + noise;
+        //mjtNum ctrl = abs(ctrl_x - ctrl_y);
+
+        //d->ctrl[actuator_x] = -ctrl_x + 0.5*(-1 + 2*signbit(ctrl_x))*-ctrl; //-ctrl + noise;
+        //d->ctrl[actuator_y] = -ctrl_y + 0.5*(-1 + 2*signbit(ctrl_x))*-ctrl; //-ctrl + noise;
     }
 
     //fix leg angles 
@@ -337,7 +347,7 @@ int main(int argc, const char** argv)
     // make data
     d = mj_makeData(m);
 
-    mjtNum theta = 0.17453/3; //10 degrees
+    mjtNum theta = 0;//0.17453/3; //10 degrees
     
     //change first 7 values of d to change starting position of hopper
     //changing xyz position
