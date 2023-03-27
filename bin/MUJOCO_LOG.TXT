@@ -240,3 +240,11 @@ WARNING: Nan, Inf or huge value in CTRL at ACTUATOR 2. The simulation is unstabl
 Thu Mar 23 13:45:17 2023
 WARNING: Nan, Inf or huge value in CTRL at ACTUATOR 2. The simulation is unstable. Time = 0.0000.
 
+Mon Mar 27 15:01:33 2023
+ERROR: Load model error: Error: free joint can only be used on top level
+Object name = x, id = 2, line = 30, column = -1
+
+Mon Mar 27 15:02:27 2023
+ERROR: Load model error: Error: repeated name in body array, position 3
+Object name = x, id = 3, line = 35, column = -1
+

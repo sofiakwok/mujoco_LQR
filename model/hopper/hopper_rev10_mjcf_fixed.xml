@@ -26,7 +26,7 @@
     <geom conaffinity="1" condim="3" material="MatPlane" name="floor" pos="0 0 0" rgba="0.8 0.9 0.8 1" size="40 40 40" type="plane" friction="4 0.01 0.01" solimp="8 10 0.001 0.5 2" solref="0.01 0.25"/>
     <!-- <body name="base_link" pos="0 0 0.5" quat="1 0 0 0"> -->
     <!-- starts robot on ground-->
-    <body name="base_link" pos="0 0 0.3" quat="1 0 0 0">
+    <body name="base_link" pos="-1 0 0.3" quat="1 0 0 0">
       <site name="imu" size='0.01' pos='0 0 0'/>
       <inertial pos="-0.00418136 0.00001975 0.01669539" quat="1 0 0 0" mass="4.74662308" diaginertia="0.03772045 0.01927139 0.03899715"/>
       <joint type="free" stiffness="0" damping="0" frictionloss="0" armature="0"/>
