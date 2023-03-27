@@ -257,14 +257,14 @@ void mycontroller(const mjModel* m, mjData* d)
         angles[2] = 0;
         cout << "angles: " << angles[0] << " " << angles[1] << endl;
         mjtNum knee_pos[3];
-        bodyid = mj_name2id(m, mjOBJ_BODY, "Link 2");
-        mju_copy(knee_pos, d->xpos + bodyid, 3);
+        bodyid = mj_name2id(m, mjOBJ_BODY, "Link 3");
+        mju_copy(knee_pos, d->xipos + bodyid, 3);
         cout << "knee pos: " << knee_pos[0] << " " << knee_pos[1] <<  " " << knee_pos[2] << endl;
         //transforming into reaction wheel frame from x and y world frame axes
         mjtNum reaction_angles[3];
         mjtNum rotation_matrix[9];
         mju_zero(rotation_matrix, 9);
-        mjtNum theta_rot = atan(knee_pos[2]/knee_pos[1]);
+        mjtNum theta_rot = 0;//atan(knee_pos[1]/knee_pos[0]);
         rotation_matrix[0] = cos(theta_rot - M_PI/4);
         rotation_matrix[1] = -sin(theta_rot - M_PI/4);
         rotation_matrix[3] = sin(theta_rot - M_PI/4);
@@ -285,7 +285,7 @@ void mycontroller(const mjModel* m, mjData* d)
         cout << "x angle: " << reaction_angles[0] << endl;
         cout << "x speed: " << vel_angles[0] << endl;
         cout << "rw speed (x): " << xvel << endl;
-        state[0] = reaction_angles[0]*10;
+        state[0] = reaction_angles[0]*50;
         state[1] = vel_angles[0];
         state[2] = xvel;
         mjtNum ctrl_x = mju_dot(K, state, 3);
@@ -301,7 +301,7 @@ void mycontroller(const mjModel* m, mjData* d)
         cout << "y angle: " << reaction_angles[1] << endl;
         cout << "y speed: " << vel_angles[1] << endl;
         cout << "rw speed (y): " << yvel << endl;
-        state[0] = reaction_angles[1]*10;
+        state[0] = reaction_angles[1]*50;
         state[1] = vel_angles[1];
         state[2] = yvel;
         mjtNum ctrl_y = mju_dot(K, state, 3);
