@@ -130,12 +130,12 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     double g = 9.81;
     double mass = 4.74662308;
     double rw_mass = 0.53255997;
-    double I_p = 2;//0.03463520;
-    double I_rw = 1;//0.00607175;
-    double L = 0.35;
-    double l = 0.242;
+    double I_p = 0.01885125;//0.03463520;
+    double I_rw = 0.00607175;//0.00607175;
+    double L = 0.3;
+    double l = 0.3;
 
-    double a = rw_mass*L*L + I_p; 
+    double a = mass*L*L + I_p; 
     //cout << "a: " << a << endl;
     double b = mass*l + rw_mass*L;
 
@@ -170,14 +170,15 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 1> D = {0, 0, 0};
 
     MatrixXd Q = C_T * C;
-    Q(0, 0) = 1000;
-    Q(1, 1) = 10;
-    Q(2, 2) = 0.0001;
+    Q(0, 0) = 100;
+    Q(1, 1) = 0.8;
+    Q(2, 2) = 0.6;
     //cout << "Q: " << Q << endl;
     //this is sus
+    MatrixXd Qf = 1 * Q;
     Matrix<double, 1, 1> R;
     R(0, 0) = 0.1;
-    Matrix3d P = Q;
+    Matrix3d P = Qf;
     MatrixXd K;
     Matrix3d Pn;
     Matrix3d P2; 
@@ -185,6 +186,7 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     for (int ricatti = 2; ricatti < 1000; ricatti++){
         //backwards Ricatti recursion
         //change arbitary amount of timesteps here at some point
+        P = Qf;
         for (int i = ricatti; i > 0; i--){
             K = (R + B_T*P*B).inverse()*B_T*P*A;
             //cout << "K: " <<K << endl;
@@ -228,7 +230,7 @@ void mycontroller(const mjModel* m, mjData* d)
         mjtNum com_pos[4];
         mju_copy(com_mat, d->site_xmat, 9);
         mju_mat2Quat(com_pos, com_mat);
-        cout << "com quat: " << com_pos[0] << " " << com_pos[1] << " " << com_pos[2] << " " << com_pos[3] << endl;
+        //cout << "com quat: " << com_pos[0] << " " << com_pos[1] << " " << com_pos[2] << " " << com_pos[3] << endl;
         //adding noise to current quaternion orientation (modeling IMU noise)
 
         //K: -104.776 -22.6821 -0.0287168
@@ -241,7 +243,7 @@ void mycontroller(const mjModel* m, mjData* d)
         ref_com[2] = 0.3;
         mjtNum delta_x[3];
         mju_rotVecQuat(delta_x, ref_com, com_pos);
-        cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
+        //cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
 
         //multiplying x axis by current quaternion to get angle of rotation of hopper
         mjtNum ref_axis[3];
@@ -250,7 +252,7 @@ void mycontroller(const mjModel* m, mjData* d)
         ref_axis[2] = 0;
         mjtNum angle_rot[3];
         mju_rotVecQuat(angle_rot, ref_axis, com_pos);
-        cout << "new x axis: " << angle_rot[0] << " " << angle_rot[1] << " " << angle_rot[2] << endl;
+        //cout << "new x axis: " << angle_rot[0] << " " << angle_rot[1] << " " << angle_rot[2] << endl;
 
         /*mjtNum com_realpos[3];
         mju_copy(com_realpos, d->site_xpos, 3);
@@ -279,10 +281,10 @@ void mycontroller(const mjModel* m, mjData* d)
         mjtNum vel_angles[3];
         bodyid = mj_name2id(m, mjOBJ_BODY, "Link 1");
         mju_copy(com_vel, d->cvel + bodyid, 6);
-        cout << "com vel: " << com_vel[0] << " " << com_vel[1] << " " << com_vel[2] << " " << com_vel[3] << " " << com_vel[4] << " " << com_vel[5] << endl;
-        trans_vel[0] = com_vel[3];
-        trans_vel[1] = com_vel[4];
-        trans_vel[2] = com_vel[5];
+        //cout << "com vel: " << com_vel[0] << " " << com_vel[1] << " " << com_vel[2] << " " << com_vel[3] << " " << com_vel[4] << " " << com_vel[5] << endl;
+        trans_vel[0] = 0;//com_vel[3];
+        trans_vel[1] = 0;//com_vel[4];
+        trans_vel[2] = 0;//com_vel[5];
         mju_rotVecMat(vel_angles, trans_vel, rotation_matrix);
 
         //reaction wheel 1 (x)
@@ -290,12 +292,13 @@ void mycontroller(const mjModel* m, mjData* d)
         int body_rw0 = mj_name2id(m, mjOBJ_BODY, "rw0");
         mjtNum state[3];
         mjtNum xvel = d->actuator_velocity[actuator_x];
-        /*cout << "x angle: " << reaction_angles[0] << endl;
-        cout << "x speed: " << vel_angles[0] << endl;*/
+        cout << "x angle ctrl: " << -100*K[0]*reaction_angles[0] << endl;
+        //cout << "x speed: " << vel_angles[0] << endl;
         cout << "rw speed (x): " << xvel << endl;
-        state[0] = reaction_angles[0]*50;
+        cout << "rw speed ctrl (x): " << K[2]*xvel << endl;
+        state[0] = reaction_angles[0]*100;
         state[1] = vel_angles[0];
-        state[2] = xvel;
+        state[2] = -xvel;
         mjtNum ctrl_x = mju_dot(K, state, 3);
         noise = 0;//(rand() % 9)/1000;
         //cout << "control (x): " << -ctrl_x << endl;
@@ -306,18 +309,19 @@ void mycontroller(const mjModel* m, mjData* d)
         int body_rw1 = mj_name2id(m, mjOBJ_BODY, "rw1");
         int yveladr = -1;
         mjtNum yvel = d->actuator_velocity[actuator_y];
-        /*cout << "y angle: " << reaction_angles[1] << endl;
-        cout << "y speed: " << vel_angles[1] << endl;*/
+        cout << "y angle ctrl: " << -100*K[0]*reaction_angles[1] << endl;
+        //cout << "y speed: " << vel_angles[1] << endl;
         cout << "rw speed (y): " << yvel << endl;
-        state[0] = reaction_angles[1]*50;
+        cout << "rw speed ctrl (y): " << K[2]*yvel << endl;
+        state[0] = reaction_angles[1]*100;
         state[1] = vel_angles[1];
-        state[2] = yvel;
+        state[2] = -yvel;
         mjtNum ctrl_y = mju_dot(K, state, 3);
         noise = 0;//(rand() % 9)/1000;
         //cout << "control (y): " << -ctrl_y << endl;
         d->ctrl[actuator_y] = -ctrl_y;
 
-        //cout << K[0] << " " << K[1] << " " << K[2] << endl;
+        cout << K[0] << " " << K[1] << " " << K[2] << endl;
         ctrl_rwx.push_back(-ctrl_x);
         ctrl_rwy.push_back(-ctrl_y);
     }
@@ -359,7 +363,7 @@ int main(int argc, const char** argv)
     // make data
     d = mj_makeData(m);
 
-    mjtNum theta = 0;//0.17453/3; //10 degrees
+    mjtNum theta = 0.17453/2; //10 degrees
     
     //change first 7 values of d to change starting position of hopper
     //changing xyz position
