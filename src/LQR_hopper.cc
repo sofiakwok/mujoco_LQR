@@ -292,16 +292,18 @@ void mycontroller(const mjModel* m, mjData* d)
         int body_rw0 = mj_name2id(m, mjOBJ_BODY, "rw0");
         mjtNum state[3];
         mjtNum xvel = d->actuator_velocity[actuator_x];
-        cout << "x angle ctrl: " << -100*K[0]*reaction_angles[0] << endl;
+        mjtNum scale = 95;
+        cout << "x angle: " << reaction_angles[0] << endl;
+        cout << "x angle ctrl: " << -scale*K[0]*reaction_angles[0] << endl;
         //cout << "x speed: " << vel_angles[0] << endl;
         cout << "rw speed (x): " << xvel << endl;
         cout << "rw speed ctrl (x): " << K[2]*xvel << endl;
-        state[0] = reaction_angles[0]*100;
+        state[0] = reaction_angles[0]*scale;
         state[1] = vel_angles[0];
         state[2] = -xvel;
         mjtNum ctrl_x = mju_dot(K, state, 3);
         noise = 0;//(rand() % 9)/1000;
-        //cout << "control (x): " << -ctrl_x << endl;
+        cout << "control (x): " << -ctrl_x << endl;
         d->ctrl[actuator_x] = -ctrl_x;
 
         //reaction wheel 2 (y)
@@ -309,16 +311,17 @@ void mycontroller(const mjModel* m, mjData* d)
         int body_rw1 = mj_name2id(m, mjOBJ_BODY, "rw1");
         int yveladr = -1;
         mjtNum yvel = d->actuator_velocity[actuator_y];
-        cout << "y angle ctrl: " << -100*K[0]*reaction_angles[1] << endl;
+        cout << "y angle: " << reaction_angles[1] << endl;
+        cout << "y angle ctrl: " << -scale*K[0]*reaction_angles[1] << endl;
         //cout << "y speed: " << vel_angles[1] << endl;
         cout << "rw speed (y): " << yvel << endl;
         cout << "rw speed ctrl (y): " << K[2]*yvel << endl;
-        state[0] = reaction_angles[1]*100;
+        state[0] = reaction_angles[1]*scale;
         state[1] = vel_angles[1];
         state[2] = -yvel;
         mjtNum ctrl_y = mju_dot(K, state, 3);
         noise = 0;//(rand() % 9)/1000;
-        //cout << "control (y): " << -ctrl_y << endl;
+        cout << "control (y): " << -ctrl_y << endl;
         d->ctrl[actuator_y] = -ctrl_y;
 
         cout << K[0] << " " << K[1] << " " << K[2] << endl;
@@ -363,7 +366,7 @@ int main(int argc, const char** argv)
     // make data
     d = mj_makeData(m);
 
-    mjtNum theta = 0.17453/2; //10 degrees
+    mjtNum theta = 0.17453/1.5; //10 degrees
     
     //change first 7 values of d to change starting position of hopper
     //changing xyz position
@@ -450,7 +453,7 @@ int main(int argc, const char** argv)
 
     }
 
-    /*std::ofstream myfile;
+    std::ofstream myfile;
     myfile.open ("rw data.csv");
     for (int i = 0; i < rw_x.size(); i++){
         myfile << to_string(rw_x[i]) + "," + to_string(rw_y[i]) + "\n";
@@ -462,7 +465,7 @@ int main(int argc, const char** argv)
     for (int i = 0; i < ctrl_rwx.size(); i++){
         ctrlfile << to_string(ctrl_rwx[i]) + "," + to_string(ctrl_rwy[i]) + "\n";
     }
-    ctrlfile.close();*/
+    ctrlfile.close();//*/
 
     // free visualization storage
     mjv_freeScene(&scn);
