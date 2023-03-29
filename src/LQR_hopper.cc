@@ -281,10 +281,10 @@ void mycontroller(const mjModel* m, mjData* d)
         mjtNum vel_angles[3];
         bodyid = mj_name2id(m, mjOBJ_BODY, "Link 1");
         mju_copy(com_vel, d->cvel + bodyid, 6);
-        //cout << "com vel: " << com_vel[0] << " " << com_vel[1] << " " << com_vel[2] << " " << com_vel[3] << " " << com_vel[4] << " " << com_vel[5] << endl;
-        trans_vel[0] = 0;//com_vel[3];
-        trans_vel[1] = 0;//com_vel[4];
-        trans_vel[2] = 0;//com_vel[5];
+        cout << "com vel: " << com_vel[0] << " " << com_vel[1] << " " << com_vel[2] << " " << com_vel[3] << " " << com_vel[4] << " " << com_vel[5] << endl;
+        trans_vel[0] = com_vel[3];
+        trans_vel[1] = com_vel[4];
+        trans_vel[2] = com_vel[5];
         mju_rotVecMat(vel_angles, trans_vel, rotation_matrix);
 
         //reaction wheel 1 (x)
@@ -292,16 +292,17 @@ void mycontroller(const mjModel* m, mjData* d)
         int body_rw0 = mj_name2id(m, mjOBJ_BODY, "rw0");
         mjtNum state[3];
         mjtNum xvel = d->actuator_velocity[actuator_x];
-        mjtNum scale = 95;
-        cout << "x angle: " << reaction_angles[0] << endl;
-        cout << "x angle ctrl: " << -scale*K[0]*reaction_angles[0] << endl;
-        //cout << "x speed: " << vel_angles[0] << endl;
-        cout << "rw speed (x): " << xvel << endl;
-        cout << "rw speed ctrl (x): " << K[2]*xvel << endl;
+        mjtNum scale = 25;
         state[0] = reaction_angles[0]*scale;
         state[1] = vel_angles[0];
         state[2] = -xvel;
         mjtNum ctrl_x = mju_dot(K, state, 3);
+        cout << "x angle: " << reaction_angles[0] << endl;
+        cout << "x angle ctrl: " << -scale*K[0]*reaction_angles[0] << endl;
+        cout << "x speed: " << vel_angles[0] << endl;
+        cout << "x speed ctrl: " << -K[1]*vel_angles[0] << endl;
+        cout << "rw speed (x): " << -xvel << endl;
+        cout << "rw speed ctrl (x): " << -K[2]*-xvel << endl;
         noise = 0;//(rand() % 9)/1000;
         cout << "control (x): " << -ctrl_x << endl;
         d->ctrl[actuator_x] = -ctrl_x;
@@ -313,9 +314,10 @@ void mycontroller(const mjModel* m, mjData* d)
         mjtNum yvel = d->actuator_velocity[actuator_y];
         cout << "y angle: " << reaction_angles[1] << endl;
         cout << "y angle ctrl: " << -scale*K[0]*reaction_angles[1] << endl;
-        //cout << "y speed: " << vel_angles[1] << endl;
-        cout << "rw speed (y): " << yvel << endl;
-        cout << "rw speed ctrl (y): " << K[2]*yvel << endl;
+        cout << "y speed: " << vel_angles[1] << endl;
+        cout << "y speed ctrl: " << -K[1]*vel_angles[1] << endl;
+        cout << "rw speed (y): " << -yvel << endl;
+        cout << "rw speed ctrl (y): " << -K[2]*-yvel << endl;
         state[0] = reaction_angles[1]*scale;
         state[1] = vel_angles[1];
         state[2] = -yvel;
@@ -454,7 +456,7 @@ int main(int argc, const char** argv)
     }
 
     std::ofstream myfile;
-    myfile.open ("rw data.csv");
+    myfile.open ("rwdata.csv");
     for (int i = 0; i < rw_x.size(); i++){
         myfile << to_string(rw_x[i]) + "," + to_string(rw_y[i]) + "\n";
     }
