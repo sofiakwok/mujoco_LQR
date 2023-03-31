@@ -134,19 +134,22 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     double mass = 4.74662308;
     double rw_mass = 0.53255997;
     double I_p = 0.01885125;//0.03463520;
-    double I_rw = 0.00607175;//0.00607175;
+    double I_rw = 0.00607175;
     double L = 0.3;
-    double l = 0.3;
+    double l = 0.2;
 
-    double a = mass*L*L + I_p; 
-    //cout << "a: " << a << endl;
-    double b = mass*l + rw_mass*L;
+    double T_m = 0.005; //motor torque constant
+
+    Matrix2d M;
+    M << mass*L*L + rw_mass*l*l + I_p + I_rw, I_rw, I_rw, I_rw;
+    double det_M = (mass*L*L + rw_mass*l*l + I_p + I_rw)*I_rw - I_rw*I_rw;
+    double m_0 = (mass*L + rw_mass*l)*g;
 
     Matrix3d A_cont;
     A_cont << 0, 1, 0, 
-        b*g/a, 0, 0,
-        -b*g/a, 0, 0;
-    Matrix<double, 3, 1> B_cont = {{0}, {-1/a}, {(a + I_rw)/(a*I_rw)}};
+        I_rw*m_0/det_M, 0, 0,
+        -I_rw*m_0/det_M, 0, 0;
+    Matrix<double, 3, 1> B_cont = {{0}, {-I_rw*T_m/det_M}, {(mass*L*L + rw_mass*l*l + I_p + I_rw)*T_m/det_M}};
 
     // discretize continuous time model
     MatrixXd A_B(3, 4);
@@ -157,13 +160,13 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     discretize << A_B/200, end_row/200;
     MatrixXd expo;
     expo = discretize.exp();
-    //cout << "expo: " << expo << endl;
+    cout << "expo: " << expo << endl;
     //getting 3x3 A matrix
     MatrixXd A;
     A = expo.block<3, 3>(0, 0);
-    //cout << "A: " << A << endl;
+    cout << "A: " << A << endl;
     MatrixXd B = expo.block<3, 1>(0, 3);
-    //cout << "B: " << B << endl;
+    cout << "B: " << B << endl;
     Matrix3d A_T = A.transpose();
     Matrix<double, 1, 3> B_T = B.transpose();
 
@@ -173,31 +176,17 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 1> D = {0, 0, 0};
 
     MatrixXd Q = C_T * C;
-    Q(0, 0) = 100;
-    Q(1, 1) = 2.6;
-    Q(2, 2) = 1.8;
+    Q(0, 0) = 1;
+    Q(1, 1) = 0.8;
+    Q(2, 2) = 0.6;
     //cout << "Q: " << Q << endl;
     //this is sus
     Matrix<double, 1, 1> R;
-    R(0, 0) = 0.01;
+    R(0, 0) = 1000;
     Matrix3d P = Q;
     MatrixXd K;
     Matrix3d Pn;
-    Matrix3d P2; 
-
-    int Nh = 20; //0.1 second at 200 Hz
-    int Nx = 3; //number of states
-    int Nu = 1; //number of control outputs
-
-    /*MatrixXd Nh_identity = MatrixXd::Identity(Nh, Nh);
-    MatrixXd u_pickout(Nh+1, Nh);
-    MatrixXd u_endrow;
-    u_endrow << 1, 0, 0, 0;
-    u_pickout << Nh_identity, u_endrow;
-    MatrixXd rw_pickout(Nh+1, Nh);
-    MatrixXd rw_endrow;
-    rw_endrow << 0, 0, 1, 0;
-    rw_pickout << Nh_identity, rw_endrow;*/
+    Matrix3d P2;
 
     for (int ricatti = 2; ricatti < 1000; ricatti++){
         //backwards Ricatti recursion
@@ -235,7 +224,6 @@ void mycontroller(const mjModel* m, mjData* d)
 {
     //running controller at 200 Hz
     if (counter % 5 == 0) {
-        int actuator_no;
         int bodyid;
 
         //getting current COM position and velocity
@@ -286,7 +274,7 @@ void mycontroller(const mjModel* m, mjData* d)
         mjtNum rotation_matrix[9];
         mju_zero(rotation_matrix, 9);
         mjtNum theta_rot = atan(angle_rot[1]/angle_rot[0]);
-        cout << "theta rot: " << theta_rot << endl;
+        //cout << "theta rot: " << theta_rot << endl;
         rotation_matrix[0] = cos(-theta_rot - M_PI/4);
         rotation_matrix[1] = -sin(-theta_rot - M_PI/4);
         rotation_matrix[3] = sin(-theta_rot - M_PI/4);
@@ -304,9 +292,14 @@ void mycontroller(const mjModel* m, mjData* d)
         trans_vel[2] = com_vel[5];
         mju_rotVecMat(vel_angles, trans_vel, rotation_matrix);
 
+
         //calculating theta_dot numerically (sus?)
-        mjtNum xtheta_dot = (reaction_angles[0] - x_location)/0.005;
-        mjtNum ytheta_dot = (reaction_angles[1] - y_location)/0.005;
+        mjtNum xtheta_dot = 0;
+        mjtNum ytheta_dot = 0;
+        if (counter != 0){
+            xtheta_dot = (reaction_angles[0] - x_location)/0.005;
+            ytheta_dot = (reaction_angles[1] - y_location)/0.005;
+        }
         x_location = reaction_angles[0];
         y_location = reaction_angles[1];
 
@@ -319,12 +312,12 @@ void mycontroller(const mjModel* m, mjData* d)
         state[1] = xtheta_dot;//vel_angles[0];
         state[2] = -xvel;//*M_PI/180;
         mjtNum ctrl_x = mju_dot(K, state, 3);
-        cout << "x angle: " << reaction_angles[0] << endl;
-        cout << "x angle ctrl: " << -K[0]*reaction_angles[0] << endl;
-        cout << "x speed: " << xtheta_dot << endl;
-        cout << "x speed ctrl: " << -K[1]*xtheta_dot << endl;
-        cout << "rw speed (x): " << xvel << endl;
-        cout << "rw speed ctrl (x): " << -K[2]*-xvel << endl;
+        //cout << "x angle: " << state[0] << endl;
+        cout << "x angle ctrl: " << -K[0]*state[0] << endl;
+        //cout << "x speed: " << state[1] << endl;
+        cout << "x speed ctrl: " << -K[1]*state[1] << endl;
+        //cout << "rw speed (x): " << state[2] << endl;
+        cout << "rw speed ctrl (x): " << -K[2]*state[2] << endl;
         cout << "control (x): " << -ctrl_x << endl;
         d->ctrl[actuator_x] = -ctrl_x;
 
@@ -333,18 +326,20 @@ void mycontroller(const mjModel* m, mjData* d)
         int body_rw1 = mj_name2id(m, mjOBJ_BODY, "rw1");
         int yveladr = -1;
         mjtNum yvel = d->actuator_velocity[actuator_y];
-        cout << "y angle: " << reaction_angles[1] << endl;
-        cout << "y angle ctrl: " << -K[0]*reaction_angles[1] << endl;
-        cout << "y speed: " << ytheta_dot << endl;
-        cout << "y speed ctrl: " << -K[1]*ytheta_dot << endl;
-        cout << "rw speed (y): " << yvel << endl;
-        cout << "rw speed ctrl (y): " << -K[2]*-yvel << endl;
         state[0] = reaction_angles[1];
         state[1] = ytheta_dot;//vel_angles[1];
         state[2] = -yvel;
         mjtNum ctrl_y = mju_dot(K, state, 3);
+        //cout << "y angle: " << state[0] << endl;
+        cout << "y angle ctrl: " << -K[0]*state[0] << endl;
+        //cout << "y speed: " << state[1] << endl;
+        cout << "y speed ctrl: " << -K[1]*state[1] << endl;
+        //cout << "rw speed (y): " << state[2] << endl;
+        cout << "rw speed ctrl (y): " << -K[2]*state[2] << endl;
         cout << "control (y): " << -ctrl_y << endl;
         d->ctrl[actuator_y] = -ctrl_y;
+
+        cout << " " << endl;
 
         cout << K[0] << " " << K[1] << " " << K[2] << endl;
         ctrl_rwx.push_back(-ctrl_x);
@@ -359,12 +354,15 @@ void mycontroller(const mjModel* m, mjData* d)
     int act_leg2 = mj_name2id(m, mjOBJ_ACTUATOR, "q2");
     d->ctrl[act_leg2] = -2000*d->qpos[m->jnt_qposadr[joint_leg2]] - 5*d->qvel[m->jnt_dofadr[joint_leg2]];
 
-    int actuator_x = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
-    mjtNum xvel = d->actuator_velocity[actuator_x];
-    int actuator_y = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
-    mjtNum yvel = d->actuator_velocity[actuator_y];
-    rw_x.push_back(xvel);
-    rw_y.push_back(yvel);
+    if (counter % 5 != 0){
+        int actuator_x = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
+        mjtNum xvel = d->actuator_velocity[actuator_x];
+        int actuator_y = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
+        mjtNum yvel = d->actuator_velocity[actuator_y];
+        rw_x.push_back(xvel);
+        rw_y.push_back(yvel);
+    }
+    
     counter += 1;
 }
 
@@ -388,7 +386,7 @@ int main(int argc, const char** argv)
     // make data
     d = mj_makeData(m);
 
-    mjtNum theta = 0.17453/1.5; //10 degrees
+    mjtNum theta = 0;//0.17453/1.5; //10 degrees
     
     //change first 7 values of d to change starting position of hopper
     //changing xyz position
@@ -450,13 +448,13 @@ int main(int argc, const char** argv)
         //  this loop will finish on time for the next frame to be rendered at 60 fps.
         //  Otherwise add a cpu timer and exit this loop when it is time to render.
         mjtNum simstart = d->time;
-        //mj_forward(m, d);
+        mj_forward(m, d);
         
-        ///*
+        /*
         while(d->time - simstart < 1.0/60.0)
         {
             mj_step(m, d);
-        }//*/
+        }*/
 
         //get framebuffer viewport
         mjrRect viewport = {0, 0, 0, 0};
