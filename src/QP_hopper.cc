@@ -316,10 +316,10 @@ void mycontroller(const mjModel* m, mjData* d)
         cout << "x angle ctrl: " << -K[0]*state[0] << endl;
         //cout << "x speed: " << state[1] << endl;
         cout << "x speed ctrl: " << -K[1]*state[1] << endl;
-        //cout << "rw speed (x): " << state[2] << endl;
+        cout << "rw speed (x): " << state[2] << endl;
         cout << "rw speed ctrl (x): " << -K[2]*state[2] << endl;
         cout << "control (x): " << -ctrl_x << endl;
-        d->ctrl[actuator_x] = -ctrl_x;
+        d->ctrl[actuator_x] = -ctrl_x*0.01;
 
         //reaction wheel 2 (y)
         int actuator_y = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
@@ -334,10 +334,10 @@ void mycontroller(const mjModel* m, mjData* d)
         cout << "y angle ctrl: " << -K[0]*state[0] << endl;
         //cout << "y speed: " << state[1] << endl;
         cout << "y speed ctrl: " << -K[1]*state[1] << endl;
-        //cout << "rw speed (y): " << state[2] << endl;
+        cout << "rw speed (y): " << state[2] << endl;
         cout << "rw speed ctrl (y): " << -K[2]*state[2] << endl;
         cout << "control (y): " << -ctrl_y << endl;
-        d->ctrl[actuator_y] = -ctrl_y;
+        d->ctrl[actuator_y] = -ctrl_y*0.01;
 
         cout << " " << endl;
 
@@ -448,13 +448,13 @@ int main(int argc, const char** argv)
         //  this loop will finish on time for the next frame to be rendered at 60 fps.
         //  Otherwise add a cpu timer and exit this loop when it is time to render.
         mjtNum simstart = d->time;
-        mj_forward(m, d);
+        //mj_forward(m, d);
         
-        /*
+        ///*
         while(d->time - simstart < 1.0/60.0)
         {
             mj_step(m, d);
-        }*/
+        }//*/
 
         //get framebuffer viewport
         mjrRect viewport = {0, 0, 0, 0};
