@@ -111,46 +111,46 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
-src/CMakeFiles/LQR_hopper.dir/rule:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/LQR_hopper.dir/rule
-.PHONY : src/CMakeFiles/LQR_hopper.dir/rule
+src/CMakeFiles/QP_hopper.dir/rule:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/QP_hopper.dir/rule
+.PHONY : src/CMakeFiles/QP_hopper.dir/rule
 
 # Convenience name for target.
-LQR_hopper: src/CMakeFiles/LQR_hopper.dir/rule
+QP_hopper: src/CMakeFiles/QP_hopper.dir/rule
 
-.PHONY : LQR_hopper
+.PHONY : QP_hopper
 
 # fast build rule for target.
-LQR_hopper/fast:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/build
-.PHONY : LQR_hopper/fast
+QP_hopper/fast:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/QP_hopper.dir/build.make src/CMakeFiles/QP_hopper.dir/build
+.PHONY : QP_hopper/fast
 
-LQR_hopper.o: LQR_hopper.cc.o
+QP_hopper.o: QP_hopper.cc.o
 
-.PHONY : LQR_hopper.o
+.PHONY : QP_hopper.o
 
 # target to build an object file
-LQR_hopper.cc.o:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o
-.PHONY : LQR_hopper.cc.o
+QP_hopper.cc.o:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/QP_hopper.dir/build.make src/CMakeFiles/QP_hopper.dir/QP_hopper.cc.o
+.PHONY : QP_hopper.cc.o
 
-LQR_hopper.i: LQR_hopper.cc.i
+QP_hopper.i: QP_hopper.cc.i
 
-.PHONY : LQR_hopper.i
+.PHONY : QP_hopper.i
 
 # target to preprocess a source file
-LQR_hopper.cc.i:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.i
-.PHONY : LQR_hopper.cc.i
+QP_hopper.cc.i:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/QP_hopper.dir/build.make src/CMakeFiles/QP_hopper.dir/QP_hopper.cc.i
+.PHONY : QP_hopper.cc.i
 
-LQR_hopper.s: LQR_hopper.cc.s
+QP_hopper.s: QP_hopper.cc.s
 
-.PHONY : LQR_hopper.s
+.PHONY : QP_hopper.s
 
 # target to generate assembly for a file
-LQR_hopper.cc.s:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.s
-.PHONY : LQR_hopper.cc.s
+QP_hopper.cc.s:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/QP_hopper.dir/build.make src/CMakeFiles/QP_hopper.dir/QP_hopper.cc.s
+.PHONY : QP_hopper.cc.s
 
 # Help Target
 help:
@@ -160,10 +160,10 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... LQR_hopper"
-	@echo "... LQR_hopper.o"
-	@echo "... LQR_hopper.i"
-	@echo "... LQR_hopper.s"
+	@echo "... QP_hopper"
+	@echo "... QP_hopper.o"
+	@echo "... QP_hopper.i"
+	@echo "... QP_hopper.s"
 .PHONY : help
 
 
