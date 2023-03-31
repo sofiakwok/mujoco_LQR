@@ -59,6 +59,9 @@ vector<double> rw_y;
 vector<double> ctrl_rwx;
 vector<double> ctrl_rwy;
 
+double x_location = 0;
+double y_location = 0;
+
 // keyboard callback
 void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods)
 {
@@ -151,7 +154,7 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     MatrixXd discretize(4, 4);
     MatrixXd end_row(1, 4);
     end_row << 0, 0, 0, 0;
-    discretize << A_B/60, end_row/60;
+    discretize << A_B/200, end_row/200;
     MatrixXd expo;
     expo = discretize.exp();
     //cout << "expo: " << expo << endl;
@@ -170,9 +173,9 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 1> D = {0, 0, 0};
 
     MatrixXd Q = C_T * C;
-    Q(0, 0) = 10;
-    Q(1, 1) = 0.6;
-    Q(2, 2) = 0.8;
+    Q(0, 0) = 100;
+    Q(1, 1) = 2.6;
+    Q(2, 2) = 1.8;
     //cout << "Q: " << Q << endl;
     //this is sus
     Matrix<double, 1, 1> R;
@@ -181,6 +184,20 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     MatrixXd K;
     Matrix3d Pn;
     Matrix3d P2; 
+
+    int Nh = 20; //0.1 second at 200 Hz
+    int Nx = 3; //number of states
+    int Nu = 1; //number of control outputs
+
+    /*MatrixXd Nh_identity = MatrixXd::Identity(Nh, Nh);
+    MatrixXd u_pickout(Nh+1, Nh);
+    MatrixXd u_endrow;
+    u_endrow << 1, 0, 0, 0;
+    u_pickout << Nh_identity, u_endrow;
+    MatrixXd rw_pickout(Nh+1, Nh);
+    MatrixXd rw_endrow;
+    rw_endrow << 0, 0, 1, 0;
+    rw_pickout << Nh_identity, rw_endrow;*/
 
     for (int ricatti = 2; ricatti < 1000; ricatti++){
         //backwards Ricatti recursion
@@ -195,7 +212,7 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
             P = Pn;
         }
 
-        if ((P - P2).norm() <= 1e-10){
+        if ((P - P2).norm() <= 1e-5){
             cout << "iters: " << ricatti << endl;
             cout << "K: " << K << endl;
             return K; 
@@ -242,7 +259,7 @@ void mycontroller(const mjModel* m, mjData* d)
         ref_com[2] = 0.3;
         mjtNum delta_x[3];
         mju_rotVecQuat(delta_x, ref_com, com_pos);
-        cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
+        //cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
 
         //multiplying x axis by current quaternion to get angle of rotation of hopper
         mjtNum ref_axis[3];
@@ -262,7 +279,7 @@ void mycontroller(const mjModel* m, mjData* d)
         angles[0] = atan(delta_x[0]/delta_x[2]);
         angles[1] = atan(delta_x[1]/delta_x[2]);
         angles[2] = 0;
-        cout << "angles: " << angles[0] << " " << angles[1] << endl;
+        //cout << "angles: " << angles[0] << " " << angles[1] << endl;
 
         //transforming into reaction wheel frame from x and y world frame axes
         mjtNum reaction_angles[3];
@@ -281,11 +298,17 @@ void mycontroller(const mjModel* m, mjData* d)
         mjtNum vel_angles[3];
         bodyid = mj_name2id(m, mjOBJ_BODY, "Link 1");
         mju_copy(com_vel, d->cvel + bodyid, 6);
-        //cout << "com vel: " << com_vel[0] << " " << com_vel[1] << " " << com_vel[2] << " " << com_vel[3] << " " << com_vel[4] << " " << com_vel[5] << endl;
-        trans_vel[0] = 0;//com_vel[3];
-        trans_vel[1] = 0;//com_vel[4];
-        trans_vel[2] = 0;//com_vel[5];
+        cout << "com vel: " << com_vel[0] << " " << com_vel[1] << " " << com_vel[2] << " " << com_vel[3] << " " << com_vel[4] << " " << com_vel[5] << endl;
+        trans_vel[0] = com_vel[3];
+        trans_vel[1] = com_vel[4];
+        trans_vel[2] = com_vel[5];
         mju_rotVecMat(vel_angles, trans_vel, rotation_matrix);
+
+        //calculating theta_dot numerically (sus?)
+        mjtNum xtheta_dot = (reaction_angles[0] - x_location)/0.005;
+        mjtNum ytheta_dot = (reaction_angles[1] - y_location)/0.005;
+        x_location = reaction_angles[0];
+        y_location = reaction_angles[1];
 
         //reaction wheel 1 (x)
         int actuator_x = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
@@ -293,16 +316,15 @@ void mycontroller(const mjModel* m, mjData* d)
         mjtNum state[3];
         mjtNum xvel = d->actuator_velocity[actuator_x];
         state[0] = reaction_angles[0];
-        state[1] = vel_angles[0];
-        state[2] = 0;//xvel;//*M_PI/180;
+        state[1] = xtheta_dot;//vel_angles[0];
+        state[2] = -xvel;//*M_PI/180;
         mjtNum ctrl_x = mju_dot(K, state, 3);
         cout << "x angle: " << reaction_angles[0] << endl;
         cout << "x angle ctrl: " << -K[0]*reaction_angles[0] << endl;
-        //cout << "x speed: " << vel_angles[0] << endl;
-        //cout << "x speed ctrl: " << -K[1]*vel_angles[0] << endl;
+        cout << "x speed: " << xtheta_dot << endl;
+        cout << "x speed ctrl: " << -K[1]*xtheta_dot << endl;
         cout << "rw speed (x): " << xvel << endl;
-        cout << "rw speed ctrl (x): " << -K[2]*xvel << endl;
-        noise = 0;//(rand() % 9)/1000;
+        cout << "rw speed ctrl (x): " << -K[2]*-xvel << endl;
         cout << "control (x): " << -ctrl_x << endl;
         d->ctrl[actuator_x] = -ctrl_x;
 
@@ -313,15 +335,14 @@ void mycontroller(const mjModel* m, mjData* d)
         mjtNum yvel = d->actuator_velocity[actuator_y];
         cout << "y angle: " << reaction_angles[1] << endl;
         cout << "y angle ctrl: " << -K[0]*reaction_angles[1] << endl;
-        //cout << "y speed: " << vel_angles[1] << endl;
-        //cout << "y speed ctrl: " << -K[1]*vel_angles[1] << endl;
+        cout << "y speed: " << ytheta_dot << endl;
+        cout << "y speed ctrl: " << -K[1]*ytheta_dot << endl;
         cout << "rw speed (y): " << yvel << endl;
-        cout << "rw speed ctrl (y): " << -K[2]*yvel << endl;
+        cout << "rw speed ctrl (y): " << -K[2]*-yvel << endl;
         state[0] = reaction_angles[1];
-        state[1] = vel_angles[1];
-        state[2] = 0;//yvel;
+        state[1] = ytheta_dot;//vel_angles[1];
+        state[2] = -yvel;
         mjtNum ctrl_y = mju_dot(K, state, 3);
-        noise = 0;//(rand() % 9)/1000;
         cout << "control (y): " << -ctrl_y << endl;
         d->ctrl[actuator_y] = -ctrl_y;
 

@@ -270,10 +270,10 @@ void mycontroller(const mjModel* m, mjData* d)
         mjtNum rotation_matrix[9];
         mju_zero(rotation_matrix, 9);
         mjtNum theta_rot = atan(angle_rot[1]/angle_rot[0]);
-        rotation_matrix[0] = cos(theta_rot - M_PI/4);
-        rotation_matrix[1] = -sin(theta_rot - M_PI/4);
-        rotation_matrix[3] = sin(theta_rot - M_PI/4);
-        rotation_matrix[4] = cos(theta_rot - M_PI/4);
+        rotation_matrix[0] = cos(-theta_rot - M_PI/4);
+        rotation_matrix[1] = -sin(-theta_rot - M_PI/4);
+        rotation_matrix[3] = sin(-theta_rot - M_PI/4);
+        rotation_matrix[4] = cos(-theta_rot - M_PI/4);
         mju_rotVecMat(reaction_angles, angles, rotation_matrix);
         //COM velocity data - gives rotational velocity followed by translational velocity (6x1)
         mjtNum com_vel[6];
