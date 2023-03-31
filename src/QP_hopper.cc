@@ -176,19 +176,19 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 1> D = {0, 0, 0};
 
     MatrixXd Q = C_T * C;
-    Q(0, 0) = 1;
-    Q(1, 1) = 0.8;
-    Q(2, 2) = 0.6;
+    Q(0, 0) = 0.1;
+    Q(1, 1) = 0.01;
+    Q(2, 2) = 10;
     //cout << "Q: " << Q << endl;
     //this is sus
     Matrix<double, 1, 1> R;
-    R(0, 0) = 1000;
+    R(0, 0) = 100000;
     Matrix3d P = Q;
     MatrixXd K;
     Matrix3d Pn;
     Matrix3d P2;
 
-    for (int ricatti = 2; ricatti < 1000; ricatti++){
+    for (int ricatti = 2; ricatti < 2000; ricatti++){
         //backwards Ricatti recursion
         //change arbitary amount of timesteps here at some point
         P = Q;
@@ -312,7 +312,7 @@ void mycontroller(const mjModel* m, mjData* d)
         state[1] = xtheta_dot;//vel_angles[0];
         state[2] = -xvel;//*M_PI/180;
         mjtNum ctrl_x = mju_dot(K, state, 3);
-        //cout << "x angle: " << state[0] << endl;
+        cout << "x angle: " << state[0] << endl;
         cout << "x angle ctrl: " << -K[0]*state[0] << endl;
         //cout << "x speed: " << state[1] << endl;
         cout << "x speed ctrl: " << -K[1]*state[1] << endl;
@@ -330,7 +330,7 @@ void mycontroller(const mjModel* m, mjData* d)
         state[1] = ytheta_dot;//vel_angles[1];
         state[2] = -yvel;
         mjtNum ctrl_y = mju_dot(K, state, 3);
-        //cout << "y angle: " << state[0] << endl;
+        cout << "y angle: " << state[0] << endl;
         cout << "y angle ctrl: " << -K[0]*state[0] << endl;
         //cout << "y speed: " << state[1] << endl;
         cout << "y speed ctrl: " << -K[1]*state[1] << endl;
