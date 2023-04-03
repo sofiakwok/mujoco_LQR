@@ -131,22 +131,22 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
 {
     // update constants
     double g = 9.81;
-    double mass = 4.64205084;
-    double rw_mass = 0.53255997;
-    double I_p = 0.01885125;
+    double mass = 4.64205084; //mass of body
+    double M = 0.53255997; //mass of rw
+    double I_body = 0.01885125;
     double I_rw = 0.00607175;
-    double L = 0.3;
-    double l = 0.15;
+    double L = 0.3; //length between foot and rw COM
+    double l = 0.25; //length between foot and body COM
 
-    double a = mass*L*L + I_p; 
-    //cout << "a: " << a << endl;
-    double b = mass*L + rw_mass*l;
+    double denom = I_body*(M*L*L + I_rw) + mass*l*l*(M*L*L + I_rw) + M*L*L*I_rw;
+
+    double b = mass*l + M*L;
 
     Matrix3d A_cont;
     A_cont << 0, 1, 0, 
-        b*g/a, 0, 0,
-        -b*g/a, 0, 0;
-    Matrix<double, 3, 1> B_cont = {{0}, {-1/a}, {(a + I_rw)/(a*I_rw)}};
+        g*(M*L*L+I_rw)*b/denom, 0, 0,
+        g*I_rw*b/denom, 0, 0;
+    Matrix<double, 3, 1> B_cont = {{0}, {-I_rw/denom}, {(I_body + I_rw + mass*l*l)/denom}};
 
     // discretize continuous time model
     MatrixXd A_B(3, 4);
@@ -154,7 +154,7 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     MatrixXd discretize(4, 4);
     MatrixXd end_row(1, 4);
     end_row << 0, 0, 0, 0;
-    discretize << A_B/200, end_row/200;
+    discretize << A_B/200, end_row;
     cout << discretize << endl;
     MatrixXd expo;
     expo = discretize.exp();
@@ -175,20 +175,19 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
 
     MatrixXd Q = C_T * C;
     Q(0, 0) = 100;
-    Q(1, 1) = 100;
-    Q(2, 2) = 100;
+    Q(1, 1) = 1;
+    Q(2, 2) = 1;
     //cout << "Q: " << Q << endl;
     //this is sus
     Matrix<double, 1, 1> R;
-    R(0, 0) = 0.01;
-    Matrix3d P = Q;
+    R(0, 0) = 1;
+    Matrix3d P = 10*Q;
     MatrixXd K;
     Matrix3d Pn;
     Matrix3d P2; 
 
     for (int ricatti = 2; ricatti < 1000; ricatti++){
         //backwards Ricatti recursion
-        //change arbitary amount of timesteps here at some point
         for (int i = ricatti; i > 0; i--){
             // not using inv() here because R + B_T*P*B is a scalar
             K = (R + B_T*P*B).inverse()*B_T*P*A;
