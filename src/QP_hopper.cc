@@ -131,25 +131,22 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
 {
     // update constants
     double g = 9.81;
-    double mass = 4.74662308;
+    double mass = 4.64205084;
     double rw_mass = 0.53255997;
-    double I_p = 0.01885125;//0.03463520;
+    double I_p = 0.01885125;
     double I_rw = 0.00607175;
     double L = 0.3;
-    double l = 0.2;
+    double l = 0.15;
 
-    double T_m = 0.005; //motor torque constant
-
-    Matrix2d M;
-    M << mass*L*L + rw_mass*l*l + I_p + I_rw, I_rw, I_rw, I_rw;
-    double det_M = (mass*L*L + rw_mass*l*l + I_p + I_rw)*I_rw - I_rw*I_rw;
-    double m_0 = (mass*L + rw_mass*l)*g;
+    double a = mass*L*L + I_p; 
+    //cout << "a: " << a << endl;
+    double b = mass*L + rw_mass*l;
 
     Matrix3d A_cont;
     A_cont << 0, 1, 0, 
-        I_rw*m_0/det_M, 0, 0,
-        -I_rw*m_0/det_M, 0, 0;
-    Matrix<double, 3, 1> B_cont = {{0}, {-I_rw*T_m/det_M}, {(mass*L*L + rw_mass*l*l + I_p + I_rw)*T_m/det_M}};
+        b*g/a, 0, 0,
+        -b*g/a, 0, 0;
+    Matrix<double, 3, 1> B_cont = {{0}, {-1/a}, {(a + I_rw)/(a*I_rw)}};
 
     // discretize continuous time model
     MatrixXd A_B(3, 4);
@@ -158,6 +155,7 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     MatrixXd end_row(1, 4);
     end_row << 0, 0, 0, 0;
     discretize << A_B/200, end_row/200;
+    cout << discretize << endl;
     MatrixXd expo;
     expo = discretize.exp();
     cout << "expo: " << expo << endl;
@@ -176,23 +174,23 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 1> D = {0, 0, 0};
 
     MatrixXd Q = C_T * C;
-    Q(0, 0) = 0.1;
-    Q(1, 1) = 0.01;
-    Q(2, 2) = 10;
+    Q(0, 0) = 100;
+    Q(1, 1) = 100;
+    Q(2, 2) = 100;
     //cout << "Q: " << Q << endl;
     //this is sus
     Matrix<double, 1, 1> R;
-    R(0, 0) = 100000;
+    R(0, 0) = 0.01;
     Matrix3d P = Q;
     MatrixXd K;
     Matrix3d Pn;
-    Matrix3d P2;
+    Matrix3d P2; 
 
-    for (int ricatti = 2; ricatti < 2000; ricatti++){
+    for (int ricatti = 2; ricatti < 1000; ricatti++){
         //backwards Ricatti recursion
         //change arbitary amount of timesteps here at some point
-        P = Q;
         for (int i = ricatti; i > 0; i--){
+            // not using inv() here because R + B_T*P*B is a scalar
             K = (R + B_T*P*B).inverse()*B_T*P*A;
             //cout << "K: " <<K << endl;
             Pn = Q + A_T*P*(A - B*K);
@@ -201,7 +199,7 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
             P = Pn;
         }
 
-        if ((P - P2).norm() <= 1e-5){
+        if ((P - P2).norm() <= 1e-10){
             cout << "iters: " << ricatti << endl;
             cout << "K: " << K << endl;
             return K; 
@@ -247,7 +245,7 @@ void mycontroller(const mjModel* m, mjData* d)
         ref_com[2] = 0.3;
         mjtNum delta_x[3];
         mju_rotVecQuat(delta_x, ref_com, com_pos);
-        //cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
+        cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
 
         //multiplying x axis by current quaternion to get angle of rotation of hopper
         mjtNum ref_axis[3];
@@ -267,17 +265,17 @@ void mycontroller(const mjModel* m, mjData* d)
         angles[0] = atan(delta_x[0]/delta_x[2]);
         angles[1] = atan(delta_x[1]/delta_x[2]);
         angles[2] = 0;
-        //cout << "angles: " << angles[0] << " " << angles[1] << endl;
+        cout << "angles: " << angles[0] << " " << angles[1] << endl;
 
         //transforming into reaction wheel frame from x and y world frame axes
         mjtNum reaction_angles[3];
         mjtNum rotation_matrix[9];
         mju_zero(rotation_matrix, 9);
         mjtNum theta_rot = atan(angle_rot[1]/angle_rot[0]);
-        //cout << "theta rot: " << theta_rot << endl;
+        cout << "theta rot: " << theta_rot << endl;
         rotation_matrix[0] = cos(-theta_rot - M_PI/4);
-        rotation_matrix[1] = -sin(-theta_rot - M_PI/4);
-        rotation_matrix[3] = sin(-theta_rot - M_PI/4);
+        rotation_matrix[1] = sin(-theta_rot - M_PI/4);
+        rotation_matrix[3] = -sin(-theta_rot - M_PI/4);
         rotation_matrix[4] = cos(-theta_rot - M_PI/4);
         mju_rotVecMat(reaction_angles, angles, rotation_matrix);
         //COM velocity data - gives rotational velocity followed by translational velocity (6x1)
@@ -286,12 +284,11 @@ void mycontroller(const mjModel* m, mjData* d)
         mjtNum vel_angles[3];
         bodyid = mj_name2id(m, mjOBJ_BODY, "Link 1");
         mju_copy(com_vel, d->cvel + bodyid, 6);
-        cout << "com vel: " << com_vel[0] << " " << com_vel[1] << " " << com_vel[2] << " " << com_vel[3] << " " << com_vel[4] << " " << com_vel[5] << endl;
+        //cout << "com vel: " << com_vel[0] << " " << com_vel[1] << " " << com_vel[2] << " " << com_vel[3] << " " << com_vel[4] << " " << com_vel[5] << endl;
         trans_vel[0] = com_vel[3];
         trans_vel[1] = com_vel[4];
         trans_vel[2] = com_vel[5];
         mju_rotVecMat(vel_angles, trans_vel, rotation_matrix);
-
 
         //calculating theta_dot numerically (sus?)
         mjtNum xtheta_dot = 0;
@@ -319,7 +316,7 @@ void mycontroller(const mjModel* m, mjData* d)
         cout << "rw speed (x): " << state[2] << endl;
         cout << "rw speed ctrl (x): " << -K[2]*state[2] << endl;
         cout << "control (x): " << -ctrl_x << endl;
-        d->ctrl[actuator_x] = -ctrl_x*0.01;
+        d->ctrl[actuator_x] = -ctrl_x;
 
         //reaction wheel 2 (y)
         int actuator_y = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
@@ -328,7 +325,7 @@ void mycontroller(const mjModel* m, mjData* d)
         mjtNum yvel = d->actuator_velocity[actuator_y];
         state[0] = reaction_angles[1];
         state[1] = ytheta_dot;//vel_angles[1];
-        state[2] = -yvel;
+        state[2] = -yvel;//*M_PI/180;
         mjtNum ctrl_y = mju_dot(K, state, 3);
         cout << "y angle: " << state[0] << endl;
         cout << "y angle ctrl: " << -K[0]*state[0] << endl;
@@ -337,7 +334,7 @@ void mycontroller(const mjModel* m, mjData* d)
         cout << "rw speed (y): " << state[2] << endl;
         cout << "rw speed ctrl (y): " << -K[2]*state[2] << endl;
         cout << "control (y): " << -ctrl_y << endl;
-        d->ctrl[actuator_y] = -ctrl_y*0.01;
+        d->ctrl[actuator_y] = -ctrl_y;
 
         cout << " " << endl;
 
