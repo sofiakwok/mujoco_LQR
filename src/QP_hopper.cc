@@ -145,7 +145,7 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix3d A_cont;
     A_cont << 0, 1, 0, 
         g*(M*L*L+I_rw)*b/denom, 0, 0,
-        g*I_rw*b/denom, 0, 0;
+        -g*I_rw*b/denom, 0, 0;
     Matrix<double, 3, 1> B_cont = {{0}, {-I_rw/denom}, {(I_body + I_rw + mass*l*l)/denom}};
 
     // discretize continuous time model
@@ -174,7 +174,7 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 1> D = {0, 0, 0};
 
     MatrixXd Q = C_T * C;
-    Q(0, 0) = 100;
+    Q(0, 0) = 10;
     Q(1, 1) = 1;
     Q(2, 2) = 1;
     //cout << "Q: " << Q << endl;
@@ -253,7 +253,7 @@ void mycontroller(const mjModel* m, mjData* d)
         ref_axis[2] = 0;
         mjtNum angle_rot[3];
         mju_rotVecQuat(angle_rot, ref_axis, com_pos);
-        //cout << "new x axis: " << angle_rot[0] << " " << angle_rot[1] << " " << angle_rot[2] << endl;
+        cout << "new x axis: " << angle_rot[0] << " " << angle_rot[1] << " " << angle_rot[2] << endl;
 
         /*mjtNum com_realpos[3];
         mju_copy(com_realpos, d->site_xpos, 3);

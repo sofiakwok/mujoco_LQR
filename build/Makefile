@@ -111,17 +111,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named QP_hopper
+# Target rules for targets named LQR_hopper
 
 # Build rule for target.
-QP_hopper: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 QP_hopper
-.PHONY : QP_hopper
+LQR_hopper: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 LQR_hopper
+.PHONY : LQR_hopper
 
 # fast build rule for target.
-QP_hopper/fast:
-	$(MAKE) -f src/CMakeFiles/QP_hopper.dir/build.make src/CMakeFiles/QP_hopper.dir/build
-.PHONY : QP_hopper/fast
+LQR_hopper/fast:
+	$(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/build
+.PHONY : LQR_hopper/fast
 
 # Help Target
 help:
@@ -131,7 +131,7 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... QP_hopper"
+	@echo "... LQR_hopper"
 .PHONY : help
 
 

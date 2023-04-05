@@ -16,6 +16,7 @@
 #include <unsupported/Eigen/MatrixFunctions>
 #include <chrono>
 #include <vector>
+#include "../include/mujoco/spline.h"
 
 using namespace std;
 using namespace Eigen;
@@ -58,6 +59,13 @@ vector<double> rw_x;
 vector<double> rw_y;
 vector<double> ctrl_rwx;
 vector<double> ctrl_rwy;
+vector<double> x_theta;
+vector<double> y_theta;
+vector<double> dot_thetax;
+vector<double> dot_thetay;
+
+double x_location = 0;
+double y_location = 0;
 
 // keyboard callback
 void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods)
@@ -128,22 +136,22 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
 {
     // update constants
     double g = 9.81;
-    double mass = 4.74662308;
-    double rw_mass = 0.53255997;
-    double I_p = 0.01885125;//0.03463520;
-    double I_rw = 0.00607175;//0.00607175;
-    double L = 0.3;
-    double l = 0.3;
+    double mass = 4.64205084; //mass of body
+    double M = 0.53255997; //mass of rw
+    double I_body = 0.01885125;
+    double I_rw = 0.00607175;
+    double L = 0.3; //length between foot and rw COM
+    double l = 0.25; //length between foot and body COM
 
-    double a = mass*L*L + I_p; 
-    //cout << "a: " << a << endl;
-    double b = mass*l + rw_mass*L;
+    double denom = I_body*(M*L*L + I_rw) + mass*l*l*(M*L*L + I_rw) + M*L*L*I_rw;
+
+    double b = mass*l + M*L;
 
     Matrix3d A_cont;
     A_cont << 0, 1, 0, 
-        b*g/a, 0, 0,
-        -b*g/a, 0, 0;
-    Matrix<double, 3, 1> B_cont = {{0}, {-1/a}, {(a + I_rw)/(a*I_rw)}};
+        g*(M*L*L+I_rw)*b/denom, 0, 0,
+        -g*I_rw*b/denom, 0, 0;
+    Matrix<double, 3, 1> B_cont = {{0}, {-I_rw/denom}, {(I_body + I_rw + mass*l*l)/denom}};
 
     // discretize continuous time model
     MatrixXd A_B(3, 4);
@@ -151,16 +159,17 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     MatrixXd discretize(4, 4);
     MatrixXd end_row(1, 4);
     end_row << 0, 0, 0, 0;
-    discretize << A_B/60, end_row/60;
+    discretize << A_B/200, end_row;
+    cout << discretize << endl;
     MatrixXd expo;
     expo = discretize.exp();
-    //cout << "expo: " << expo << endl;
+    cout << "expo: " << expo << endl;
     //getting 3x3 A matrix
     MatrixXd A;
     A = expo.block<3, 3>(0, 0);
-    //cout << "A: " << A << endl;
+    cout << "A: " << A << endl;
     MatrixXd B = expo.block<3, 1>(0, 3);
-    //cout << "B: " << B << endl;
+    cout << "B: " << B << endl;
     Matrix3d A_T = A.transpose();
     Matrix<double, 1, 3> B_T = B.transpose();
 
@@ -170,24 +179,22 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 1> D = {0, 0, 0};
 
     MatrixXd Q = C_T * C;
-    Q(0, 0) = 100;
-    Q(1, 1) = 0.8;
-    Q(2, 2) = 0.6;
+    Q(0, 0) = 10;
+    Q(1, 1) = 1;
+    Q(2, 2) = 1;
     //cout << "Q: " << Q << endl;
     //this is sus
-    MatrixXd Qf = 1 * Q;
     Matrix<double, 1, 1> R;
-    R(0, 0) = 0.1;
-    Matrix3d P = Qf;
+    R(0, 0) = 1;
+    Matrix3d P = 10*Q;
     MatrixXd K;
     Matrix3d Pn;
     Matrix3d P2; 
 
     for (int ricatti = 2; ricatti < 1000; ricatti++){
         //backwards Ricatti recursion
-        //change arbitary amount of timesteps here at some point
-        P = Qf;
         for (int i = ricatti; i > 0; i--){
+            // not using inv() here because R + B_T*P*B is a scalar
             K = (R + B_T*P*B).inverse()*B_T*P*A;
             //cout << "K: " <<K << endl;
             Pn = Q + A_T*P*(A - B*K);
@@ -217,119 +224,58 @@ void set_position_servo(const mjModel* m, int actuator_no, double kp)
 
 void mycontroller(const mjModel* m, mjData* d)
 {
-    //running controller at 200 Hz
-    if (counter % 5 == 0) {
-        int actuator_no;
-        int bodyid;
+    int bodyid;
 
-        //getting current COM position and velocity
-        //COM position is not right, need to add a body at COM
-        bodyid = mj_name2id(m, mjOBJ_SITE, "imu");
-        //gives current body frame orientation as a quaternion in Cartesian coordinates
-        mjtNum com_mat[9];
-        mjtNum com_pos[4];
-        mju_copy(com_mat, d->site_xmat, 9);
-        mju_mat2Quat(com_pos, com_mat);
-        //cout << "com quat: " << com_pos[0] << " " << com_pos[1] << " " << com_pos[2] << " " << com_pos[3] << endl;
-        //adding noise to current quaternion orientation (modeling IMU noise)
+    //getting current COM position and velocity
+    //COM position is not right, need to add a body at COM
+    bodyid = mj_name2id(m, mjOBJ_SITE, "imu");
+    //gives current body frame orientation as a quaternion in Cartesian coordinates
+    mjtNum com_mat[9];
+    mjtNum com_pos[4];
+    mju_copy(com_mat, d->site_xmat, 9);
+    mju_mat2Quat(com_pos, com_mat);
+    //cout << "com quat: " << com_pos[0] << " " << com_pos[1] << " " << com_pos[2] << " " << com_pos[3] << endl;
+    //adding noise to current quaternion orientation (modeling IMU noise)
 
-        //K: -104.776 -22.6821 -0.0287168
-        
-        double noise;
-        //multiplying starting position difference between ref position and current quaternion to find current COM
-        mjtNum ref_com[3];
-        ref_com[0] = 0;
-        ref_com[1] = 0;
-        ref_com[2] = 0.3;
-        mjtNum delta_x[3];
-        mju_rotVecQuat(delta_x, ref_com, com_pos);
-        //cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
+    //K: -104.776 -22.6821 -0.0287168
+    
+    double noise;
+    //multiplying starting position difference between ref position and current quaternion to find current COM
+    mjtNum ref_com[3];
+    ref_com[0] = 0;
+    ref_com[1] = 0;
+    ref_com[2] = 0.3;
+    mjtNum delta_x[3];
+    mju_rotVecQuat(delta_x, ref_com, com_pos);
+    //cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
 
-        //multiplying x axis by current quaternion to get angle of rotation of hopper
-        mjtNum ref_axis[3];
-        ref_axis[0] = 1;
-        ref_axis[1] = 0;
-        ref_axis[2] = 0;
-        mjtNum angle_rot[3];
-        mju_rotVecQuat(angle_rot, ref_axis, com_pos);
-        //cout << "new x axis: " << angle_rot[0] << " " << angle_rot[1] << " " << angle_rot[2] << endl;
+    //multiplying x axis by current quaternion to get angle of rotation of hopper
+    mjtNum ref_axis[3];
+    ref_axis[0] = 1;
+    ref_axis[1] = 0;
+    ref_axis[2] = 0;
+    mjtNum angle_rot[3];
+    mju_rotVecQuat(angle_rot, ref_axis, com_pos);
+    //cout << "new x axis: " << angle_rot[0] << " " << angle_rot[1] << " " << angle_rot[2] << endl;
 
-        /*mjtNum com_realpos[3];
-        mju_copy(com_realpos, d->site_xpos, 3);
-        cout << "com real pos: " << com_realpos[0] <<  " " << com_realpos[1] << " " << com_realpos[2] << endl;*/
+    //finding angle from z axis for x and y
+    mjtNum angles[3];
+    angles[0] = atan(delta_x[0]/delta_x[2]);
+    angles[1] = atan(delta_x[1]/delta_x[2]);
+    angles[2] = 0;
+    //cout << "angles: " << angles[0] << " " << angles[1] << endl;
 
-        //finding angle from z axis for x and y
-        mjtNum angles[3];
-        angles[0] = atan(delta_x[0]/delta_x[2]);
-        angles[1] = atan(delta_x[1]/delta_x[2]);
-        angles[2] = 0;
-        //cout << "angles: " << angles[0] << " " << angles[1] << endl;
-
-        //transforming into reaction wheel frame from x and y world frame axes
-        mjtNum reaction_angles[3];
-        mjtNum rotation_matrix[9];
-        mju_zero(rotation_matrix, 9);
-        mjtNum theta_rot = atan(angle_rot[1]/angle_rot[0]);
-        rotation_matrix[0] = cos(-theta_rot - M_PI/4);
-        rotation_matrix[1] = -sin(-theta_rot - M_PI/4);
-        rotation_matrix[3] = sin(-theta_rot - M_PI/4);
-        rotation_matrix[4] = cos(-theta_rot - M_PI/4);
-        mju_rotVecMat(reaction_angles, angles, rotation_matrix);
-        //COM velocity data - gives rotational velocity followed by translational velocity (6x1)
-        mjtNum com_vel[6];
-        mjtNum trans_vel[3];
-        mjtNum vel_angles[3];
-        bodyid = mj_name2id(m, mjOBJ_BODY, "Link 1");
-        mju_copy(com_vel, d->cvel + bodyid, 6);
-        cout << "com vel: " << com_vel[0] << " " << com_vel[1] << " " << com_vel[2] << " " << com_vel[3] << " " << com_vel[4] << " " << com_vel[5] << endl;
-        trans_vel[0] = com_vel[3];
-        trans_vel[1] = com_vel[4];
-        trans_vel[2] = com_vel[5];
-        mju_rotVecMat(vel_angles, trans_vel, rotation_matrix);
-
-        //reaction wheel 1 (x)
-        int actuator_x = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
-        int body_rw0 = mj_name2id(m, mjOBJ_BODY, "rw0");
-        mjtNum state[3];
-        mjtNum xvel = d->actuator_velocity[actuator_x];
-        mjtNum scale = 25;
-        state[0] = reaction_angles[0]*scale;
-        state[1] = vel_angles[0];
-        state[2] = -xvel;
-        mjtNum ctrl_x = mju_dot(K, state, 3);
-        cout << "x angle: " << reaction_angles[0] << endl;
-        cout << "x angle ctrl: " << -scale*K[0]*reaction_angles[0] << endl;
-        cout << "x speed: " << vel_angles[0] << endl;
-        cout << "x speed ctrl: " << -K[1]*vel_angles[0] << endl;
-        cout << "rw speed (x): " << -xvel << endl;
-        cout << "rw speed ctrl (x): " << -K[2]*-xvel << endl;
-        noise = 0;//(rand() % 9)/1000;
-        cout << "control (x): " << -ctrl_x << endl;
-        d->ctrl[actuator_x] = -ctrl_x;
-
-        //reaction wheel 2 (y)
-        int actuator_y = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
-        int body_rw1 = mj_name2id(m, mjOBJ_BODY, "rw1");
-        int yveladr = -1;
-        mjtNum yvel = d->actuator_velocity[actuator_y];
-        cout << "y angle: " << reaction_angles[1] << endl;
-        cout << "y angle ctrl: " << -scale*K[0]*reaction_angles[1] << endl;
-        cout << "y speed: " << vel_angles[1] << endl;
-        cout << "y speed ctrl: " << -K[1]*vel_angles[1] << endl;
-        cout << "rw speed (y): " << -yvel << endl;
-        cout << "rw speed ctrl (y): " << -K[2]*-yvel << endl;
-        state[0] = reaction_angles[1]*scale;
-        state[1] = vel_angles[1];
-        state[2] = -yvel;
-        mjtNum ctrl_y = mju_dot(K, state, 3);
-        noise = 0;//(rand() % 9)/1000;
-        cout << "control (y): " << -ctrl_y << endl;
-        d->ctrl[actuator_y] = -ctrl_y;
-
-        cout << K[0] << " " << K[1] << " " << K[2] << endl;
-        ctrl_rwx.push_back(-ctrl_x);
-        ctrl_rwy.push_back(-ctrl_y);
-    }
+    //transforming into reaction wheel frame from x and y world frame axes
+    mjtNum reaction_angles[3];
+    mjtNum rotation_matrix[9];
+    mju_zero(rotation_matrix, 9);
+    mjtNum theta_rot = atan(angle_rot[1]/angle_rot[0]);
+    //cout << "theta rot: " << theta_rot << endl;
+    rotation_matrix[0] = cos(-theta_rot - M_PI/4);
+    rotation_matrix[1] = sin(-theta_rot - M_PI/4);
+    rotation_matrix[3] = -sin(-theta_rot - M_PI/4);
+    rotation_matrix[4] = cos(-theta_rot - M_PI/4);
+    mju_rotVecMat(reaction_angles, angles, rotation_matrix);
 
     //fix leg angles 
     int joint_leg0 = mj_name2id(m, mjOBJ_JOINT, "Joint 0");
@@ -345,6 +291,70 @@ void mycontroller(const mjModel* m, mjData* d)
     mjtNum yvel = d->actuator_velocity[actuator_y];
     rw_x.push_back(xvel);
     rw_y.push_back(yvel);
+    x_theta.push_back(reaction_angles[0]);
+    y_theta.push_back(reaction_angles[1]);
+    
+
+    //running controller at 200 Hz
+    if (counter % 5 == 0) {
+
+        //calculating theta_dot using splines (sus?)
+        mjtNum xtheta_dot = 0;
+        mjtNum ytheta_dot = 0;
+        if (counter != 0){
+            vector<double> t = {0, 1, 2, 3, 4, 5};
+            vector<double> X{x_theta[counter-5], x_theta[counter-4], x_theta[counter-3], x_theta[counter-2], x_theta[counter-1], x_theta[counter]};
+            vector<double> Y = {y_theta[counter-5],y_theta[counter-4],y_theta[counter-3],y_theta[counter-2],y_theta[counter-1],y_theta[counter]};
+            tk::spline x_spline(t, X);
+            tk::spline y_spline(t, Y);
+            xtheta_dot = x_spline.deriv(1, 0);
+            ytheta_dot = y_spline.deriv(1, 0);
+        }
+        dot_thetax.push_back(xtheta_dot);
+        dot_thetay.push_back(ytheta_dot);
+
+        //reaction wheel 1 (x)
+        int actuator_x = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
+        int body_rw0 = mj_name2id(m, mjOBJ_BODY, "rw0");
+        mjtNum state[3];
+        mjtNum xvel = d->actuator_velocity[actuator_x];
+        state[0] = reaction_angles[0];
+        state[1] = 0;//xtheta_dot;//vel_angles[0];
+        state[2] = -xvel;//*M_PI/180;
+        mjtNum ctrl_x = mju_dot(K, state, 3);
+        /*cout << "x angle: " << state[0] << endl;
+        cout << "x angle ctrl: " << -K[0]*state[0] << endl;
+        //cout << "x speed: " << state[1] << endl;
+        cout << "x speed ctrl: " << -K[1]*state[1] << endl;
+        cout << "rw speed (x): " << state[2] << endl;
+        cout << "rw speed ctrl (x): " << -K[2]*state[2] << endl;
+        cout << "control (x): " << -ctrl_x << endl;*/
+        d->ctrl[actuator_x] = -ctrl_x;
+
+        //reaction wheel 2 (y)
+        int actuator_y = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
+        int body_rw1 = mj_name2id(m, mjOBJ_BODY, "rw1");
+        int yveladr = -1;
+        mjtNum yvel = d->actuator_velocity[actuator_y];
+        state[0] = reaction_angles[1];
+        state[1] = 0;//ytheta_dot;//vel_angles[1];
+        state[2] = -yvel;//*M_PI/180;
+        mjtNum ctrl_y = mju_dot(K, state, 3);
+        /*cout << "y angle: " << state[0] << endl;
+        cout << "y angle ctrl: " << -K[0]*state[0] << endl;
+        //cout << "y speed: " << state[1] << endl;
+        cout << "y speed ctrl: " << -K[1]*state[1] << endl;
+        cout << "rw speed (y): " << state[2] << endl;
+        cout << "rw speed ctrl (y): " << -K[2]*state[2] << endl;
+        cout << "control (y): " << -ctrl_y << endl;*/
+        d->ctrl[actuator_y] = -ctrl_y;
+
+        //cout << " " << endl;
+
+        //cout << K[0] << " " << K[1] << " " << K[2] << endl;
+        ctrl_rwx.push_back(-ctrl_x);
+        ctrl_rwy.push_back(-ctrl_y);
+    }
     counter += 1;
 }
 
@@ -368,7 +378,7 @@ int main(int argc, const char** argv)
     // make data
     d = mj_makeData(m);
 
-    mjtNum theta = 0.17453/1.5; //10 degrees
+    mjtNum theta = 0;//0.17453/1.5; //10 degrees
     
     //change first 7 values of d to change starting position of hopper
     //changing xyz position
@@ -467,7 +477,21 @@ int main(int argc, const char** argv)
     for (int i = 0; i < ctrl_rwx.size(); i++){
         ctrlfile << to_string(ctrl_rwx[i]) + "," + to_string(ctrl_rwy[i]) + "\n";
     }
-    ctrlfile.close();//*/
+    ctrlfile.close();
+
+    std::ofstream anglefile;
+    anglefile.open ("angles.csv");
+    for (int i = 0; i < x_theta.size(); i++){
+        anglefile << to_string(x_theta[i]) + "," + to_string(y_theta[i]) + "\n";
+    }
+    anglefile.close();//*/
+
+    std::ofstream dot_angle;
+    dot_angle.open ("dotangles.csv");
+    for (int i = 0; i < dot_thetax.size(); i++){
+        dot_angle << to_string(dot_thetax[i]) + "," + to_string(dot_thetay[i]) + "\n";
+    }
+    dot_angle.close();//*/
 
     // free visualization storage
     mjv_freeScene(&scn);

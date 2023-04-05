@@ -68,6 +68,22 @@ mujoco/mjui.h
 mujoco/mjvisualize.h
 -
 
+/home/sofia/mujoco_LQR/include/mujoco/spline.h
+cstdio
+-
+cassert
+-
+cmath
+-
+vector
+-
+algorithm
+-
+sstream
+-
+string
+-
+
 /home/sofia/mujoco_LQR/src/LQR_hopper.cc
 stdbool.h
 -
@@ -103,6 +119,8 @@ chrono
 -
 vector
 -
+../include/mujoco/spline.h
+/home/sofia/mujoco_LQR/include/mujoco/spline.h
 
 /usr/include/eigen3/Eigen/Cholesky
 Core

@@ -10,6 +10,7 @@ src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: ../include/mujoco/mjtnum.h
 src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: ../include/mujoco/mjui.h
 src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: ../include/mujoco/mjvisualize.h
 src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: ../include/mujoco/mujoco.h
+src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: ../include/mujoco/spline.h
 src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: ../src/LQR_hopper.cc
 src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: /usr/include/eigen3/Eigen/Cholesky
 src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o: /usr/include/eigen3/Eigen/Core
