@@ -258,10 +258,15 @@ void mycontroller(const mjModel* m, mjData* d)
     //finding angle from z axis for x and y
     mjtNum reaction_angles[3];
     mjtNum angles[3];
-    angles[0] = atan(delta_x[0]/delta_x[2]);
-    angles[1] = atan(delta_x[1]/delta_x[2]);//atan(mju_sqrt(mju_pow(delta_x[0], 2) + mju_pow(delta_x[2], 2))/delta_x[1]);
-    angles[2] = 0;//atan(mju_sqrt(mju_pow(delta_x[0], 2) + mju_pow(delta_x[1], 2))/delta_x[2]);
-    mju_rotVecQuat(reaction_angles, angles, com_pos);
+    angles[0] = 0;//atan(delta_x[0]/delta_x[2]);
+    angles[1] = 0;//atan(delta_x[1]/delta_x[2]);//atan(mju_sqrt(mju_pow(delta_x[0], 2) + mju_pow(delta_x[2], 2))/delta_x[1]);
+    angles[2] = atan(mju_sqrt(mju_pow(delta_x[0], 2) + mju_pow(delta_x[1], 2))/delta_x[2]);
+    mjtNum rot_quat[4];
+    rot_quat[0] = 1;//cos(-M_PI_4/2);
+    rot_quat[1] = 0;//delta_x[0]*sin(-M_PI_4/2);
+    rot_quat[2] = 0;//delta_x[1]*sin(-M_PI_4/2);
+    rot_quat[3] = 0;//delta_x[2]*sin(-M_PI_4/2);
+    mju_rotVecQuat(reaction_angles, angles, rot_quat);
     cout << "angles: " << reaction_angles[0] << " " << reaction_angles[1] << " " << reaction_angles[2] << endl;
     //cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
 
@@ -288,7 +293,7 @@ void mycontroller(const mjModel* m, mjData* d)
     trans_vel[0] = com_vel[3];
     trans_vel[1] = com_vel[4];
     trans_vel[2] = com_vel[5];
-    mju_rotVecQuat(vel_angles, trans_vel, com_pos);
+    mju_rotVecQuat(vel_angles, trans_vel, rot_quat);
     //mju_rotVecMat(vel_angles, trans_vel, rotation_matrix);
 
     //fix leg angles 
