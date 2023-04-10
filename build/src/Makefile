@@ -111,46 +111,46 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
-src/CMakeFiles/LQR_hopper.dir/rule:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/LQR_hopper.dir/rule
-.PHONY : src/CMakeFiles/LQR_hopper.dir/rule
+src/CMakeFiles/planar_LQR.dir/rule:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/planar_LQR.dir/rule
+.PHONY : src/CMakeFiles/planar_LQR.dir/rule
 
 # Convenience name for target.
-LQR_hopper: src/CMakeFiles/LQR_hopper.dir/rule
+planar_LQR: src/CMakeFiles/planar_LQR.dir/rule
 
-.PHONY : LQR_hopper
+.PHONY : planar_LQR
 
 # fast build rule for target.
-LQR_hopper/fast:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/build
-.PHONY : LQR_hopper/fast
+planar_LQR/fast:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/planar_LQR.dir/build.make src/CMakeFiles/planar_LQR.dir/build
+.PHONY : planar_LQR/fast
 
-LQR_hopper.o: LQR_hopper.cc.o
+planar_LQR.o: planar_LQR.cc.o
 
-.PHONY : LQR_hopper.o
+.PHONY : planar_LQR.o
 
 # target to build an object file
-LQR_hopper.cc.o:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o
-.PHONY : LQR_hopper.cc.o
+planar_LQR.cc.o:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/planar_LQR.dir/build.make src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.o
+.PHONY : planar_LQR.cc.o
 
-LQR_hopper.i: LQR_hopper.cc.i
+planar_LQR.i: planar_LQR.cc.i
 
-.PHONY : LQR_hopper.i
+.PHONY : planar_LQR.i
 
 # target to preprocess a source file
-LQR_hopper.cc.i:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.i
-.PHONY : LQR_hopper.cc.i
+planar_LQR.cc.i:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/planar_LQR.dir/build.make src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.i
+.PHONY : planar_LQR.cc.i
 
-LQR_hopper.s: LQR_hopper.cc.s
+planar_LQR.s: planar_LQR.cc.s
 
-.PHONY : LQR_hopper.s
+.PHONY : planar_LQR.s
 
 # target to generate assembly for a file
-LQR_hopper.cc.s:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.s
-.PHONY : LQR_hopper.cc.s
+planar_LQR.cc.s:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/planar_LQR.dir/build.make src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.s
+.PHONY : planar_LQR.cc.s
 
 # Help Target
 help:
@@ -160,10 +160,10 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... LQR_hopper"
-	@echo "... LQR_hopper.o"
-	@echo "... LQR_hopper.i"
-	@echo "... LQR_hopper.s"
+	@echo "... planar_LQR"
+	@echo "... planar_LQR.o"
+	@echo "... planar_LQR.i"
+	@echo "... planar_LQR.s"
 .PHONY : help
 
 

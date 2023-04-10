@@ -248,14 +248,10 @@ void mycontroller(const mjModel* m, mjData* d)
     cout << "imu pos: " << imu_pos[0] << " " << imu_pos[1] << " " << imu_pos[2] << endl;
     //adding noise to current quaternion orientation (modeling IMU noise)
 
-    //multiplying starting position difference between ref position and current quaternion to find current COM
-    mjtNum ref_com[3];
-    ref_com[0] = 0;
-    ref_com[1] = 0;
-    ref_com[2] = 0.3;
+    //rotating into body frame
     mjtNum delta_x[3];
-    mju_rotVecQuat(delta_x, ref_com, com_pos);
-    cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
+    mju_rotVecQuat(delta_x, imu_pos, com_pos);
+    cout << "com est pos (body): " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
 
     //finding angle from z axis for x and y
     mjtNum reaction_angles[3];
@@ -266,14 +262,18 @@ void mycontroller(const mjModel* m, mjData* d)
     cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
 
     //rotating into body frame of hopper 
-    bodyid = mj_name2id(m, mjOBJ_BODY, "rw0");
+    bodyid = mj_name2id(m, mjOBJ_BODY, "rw1");
     mjtNum rwx_pos[3];
-    mju_copy(rwx_pos, d->xipos + bodyid, 3);
+    mju_copy(rwx_pos, d->xpos + bodyid, 3);
     cout << "rw pos: " << rwx_pos[0] << " " << rwx_pos[1] << " " << rwx_pos[2] << endl; 
+    mjtNum body_rwx[3];
+    mjtNum body_quat[3];
+    mju_rotVecQuat(body_rwx, rwx_pos, com_pos);
+    mju_rotVecQuat(body_quat, delta_x, com_pos);
 
     mjtNum norm = sqrt(mju_pow(delta_x[0],2) + mju_pow(delta_x[1],2) + mju_pow(delta_x[2],2));
     mjtNum rot_quat[4];
-    mjtNum theta_rot = atan((rwx_pos[1] - imu_pos[1])/(rwx_pos[0] - imu_pos[0])) - 1.41638;
+    mjtNum theta_rot = atan((body_rwx[1] - body_quat[1])/(body_rwx[0] - body_quat[0])) + 1.55;
     cout << "theta rot: " << theta_rot << endl;
     rot_quat[0] = cos(theta_rot - M_PI_4/2);
     rot_quat[1] = delta_x[0]*sin(theta_rot - M_PI_4/2)/norm;
@@ -366,13 +366,13 @@ void mycontroller(const mjModel* m, mjData* d)
 
         mjtNum ctrl_z = ctrl[2];
         //cout << "ctrl z: " << ctrl_z << endl;
-        d->ctrl[actuator_z] = 0;//-ctrl_z;//-0.5*ctrl_z;//-ctrl_z;
+        d->ctrl[actuator_z] = -ctrl_z;//-0.5*ctrl_z;//-ctrl_z;
         //cout << " " << endl;
 
         //cout << K[0] << " " << K[1] << " " << K[2] << endl;
-        /*ctrl_rwx.push_back(-ctrl_x);
+        ctrl_rwx.push_back(-ctrl_x);
         ctrl_rwy.push_back(-ctrl_y);
-        ctrl_rwz.push_back(-ctrl_z);*/
+        //ctrl_rwz.push_back(-ctrl_z);
         //cout << "done with controller" << endl;
     }
     counter += 1;
