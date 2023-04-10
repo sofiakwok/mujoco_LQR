@@ -183,7 +183,7 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Q(2, 2) = 10;*/
     //cout << "Q: " << Q << endl;
     //this is sus
-    MatrixXd R = 1000*MatrixXd::Identity(3, 3);
+    MatrixXd R = 10*MatrixXd::Identity(3, 3);
     MatrixXd P = 10*Q;
     MatrixXd K;
     MatrixXd Pn;
@@ -216,7 +216,7 @@ void mycontroller(const mjModel* m, mjData* d)
     //getting current COM position and velocity
     //COM position is not right, need to add a body at COM
     bodyid = mj_name2id(m, mjOBJ_SITE, "imu");
-    //gives current body frame orientation as a quaternion in Cartesian coordinates
+    //gives current body frame orientation as a quaternion in Cartesian coordinates (world frame)
     mjtNum com_mat[9];
     mjtNum com_pos[4];
     mjtNum imu_pos[3];
@@ -229,8 +229,9 @@ void mycontroller(const mjModel* m, mjData* d)
 
     //rotating into body frame
     mjtNum delta_x[3];
-    mju_rotVecQuat(delta_x, imu_pos, com_pos);
-    //cout << "com est pos (body): " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
+    mju_copy(delta_x, imu_pos, 3);
+    //mju_rotVecQuat(delta_x, imu_pos, com_pos);
+    cout << "com pos (body): " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
 
     //finding angle from z axis for x and y
     mjtNum reaction_angles[3];
@@ -241,26 +242,32 @@ void mycontroller(const mjModel* m, mjData* d)
     //cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
 
     //rotating into body frame of hopper 
-    bodyid = mj_name2id(m, mjOBJ_BODY, "rw1");
+    bodyid = mj_name2id(m, mjOBJ_BODY, "Link 2");
+    mjtNum link_pos[3];
+    mju_copy(link_pos, d->site_xpos + bodyid, 3);
+    mjtNum link_quat[4];
+    link_quat[0] = 0.258819;
+    link_quat[1] = 0;
+    link_quat[2] = 0.965926;
+    link_quat[3] = 0;
+    mjtNum opp_quat[4];
+    mju_negQuat(opp_quat, link_quat);
     mjtNum rwx_pos[3];
-    mju_copy(rwx_pos, d->xpos + bodyid, 3);
-    //cout << "rw pos: " << rwx_pos[0] << " " << rwx_pos[1] << " " << rwx_pos[2] << endl; 
-    mjtNum body_rwx[3];
-    mjtNum body_quat[3];
-    mju_rotVecQuat(body_rwx, rwx_pos, com_pos);
-    mju_rotVecQuat(body_quat, delta_x, com_pos);
+    mju_rotVecQuat(rwx_pos, link_pos, opp_quat);
+
+    cout << "link pos: " << rwx_pos[0] << " " << rwx_pos[1] << " " << rwx_pos[2] << endl; 
 
     mjtNum norm = sqrt(mju_pow(delta_x[0],2) + mju_pow(delta_x[1],2) + mju_pow(delta_x[2],2));
     mjtNum rot_quat[4];
-    mjtNum theta_rot = atan((body_rwx[1] - body_quat[1])/(body_rwx[0] - body_quat[0])) + 1.55;
-    //cout << "theta rot: " << theta_rot << endl;
-    rot_quat[0] = cos(theta_rot - M_PI_4/2);
-    rot_quat[1] = 0;//delta_x[0]*sin(theta_rot - M_PI_4/2)/norm;
-    rot_quat[2] = 0;//delta_x[1]*sin(theta_rot - M_PI_4/2)/norm;
-    rot_quat[3] = 1*sin(theta_rot - M_PI_4/2);//delta_x[2]*sin(theta_rot - M_PI_4/2)/norm;
+    mjtNum theta_rot = 0;//atan((rwx_pos[1] - delta_x[1])/(rwx_pos[0] - delta_x[0]));
+    cout << "theta rot: " << -theta_rot << endl;
+    rot_quat[0] = cos(-theta_rot - M_PI_4/2);
+    rot_quat[1] = delta_x[0]*sin(-theta_rot - M_PI_4/2)/norm;
+    rot_quat[2] = delta_x[1]*sin(-theta_rot - M_PI_4/2)/norm;
+    rot_quat[3] = delta_x[2]*sin(-theta_rot - M_PI_4/2)/norm;
     
     mju_rotVecQuat(reaction_angles, angles, rot_quat);
-    //cout << "angles: " << reaction_angles[0] << " " << reaction_angles[1] << " " << reaction_angles[2] << endl;
+    cout << "angles: " << reaction_angles[0] << " " << reaction_angles[1] << " " << reaction_angles[2] << endl;
     //cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
 
     //getting body angular velocities
@@ -291,6 +298,7 @@ void mycontroller(const mjModel* m, mjData* d)
     mjtNum yvel = d->actuator_velocity[actuator_y];
     rw_x.push_back(xvel);
     rw_y.push_back(yvel);
+    cout << "rw speed: " << -xvel << " " << -yvel << endl;
     x_theta.push_back(reaction_angles[0]);
     y_theta.push_back(reaction_angles[1]);
     
@@ -305,8 +313,6 @@ void mycontroller(const mjModel* m, mjData* d)
 
         Matrix<double, 3, 1> ctrl;
         ctrl = K * state;
-
-        cout << "rw speed: " << -xvel << " " << -yvel << endl;
 
         cout << "rw ctrl: " << ctrl[0] << " " << ctrl[1] << " " << ctrl[2]<< endl;
 
