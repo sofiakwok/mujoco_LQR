@@ -240,12 +240,14 @@ void mycontroller(const mjModel* m, mjData* d)
     //gives current body frame orientation as a quaternion in Cartesian coordinates
     mjtNum com_mat[9];
     mjtNum com_pos[4];
-    mju_copy(com_mat, d->site_xmat, 9);
+    mjtNum imu_pos[3];
+    mju_copy(com_mat, d->site_xmat + bodyid, 9);
+    mju_copy(imu_pos, d->site_xpos + bodyid, 3);
     mju_mat2Quat(com_pos, com_mat);
     cout << "com quat: " << com_pos[0] << " " << com_pos[1] << " " << com_pos[2] << " " << com_pos[3] << endl;
+    cout << "imu pos: " << imu_pos[0] << " " << imu_pos[1] << " " << imu_pos[2] << endl;
     //adding noise to current quaternion orientation (modeling IMU noise)
-    
-    double noise;
+
     //multiplying starting position difference between ref position and current quaternion to find current COM
     mjtNum ref_com[3];
     ref_com[0] = 0;
@@ -258,30 +260,29 @@ void mycontroller(const mjModel* m, mjData* d)
     //finding angle from z axis for x and y
     mjtNum reaction_angles[3];
     mjtNum angles[3];
-    angles[0] = 0;//atan(delta_x[0]/delta_x[2]);
-    angles[1] = 0;//atan(delta_x[1]/delta_x[2]);//atan(mju_sqrt(mju_pow(delta_x[0], 2) + mju_pow(delta_x[2], 2))/delta_x[1]);
-    angles[2] = atan(mju_sqrt(mju_pow(delta_x[0], 2) + mju_pow(delta_x[1], 2))/delta_x[2]);
+    angles[0] = atan(delta_x[0]/delta_x[2]);
+    angles[1] = atan(delta_x[1]/delta_x[2]);//atan(mju_sqrt(mju_pow(delta_x[0], 2) + mju_pow(delta_x[2], 2))/delta_x[1]);
+    angles[2] = 0;//atan(mju_sqrt(mju_pow(delta_x[0], 2) + mju_pow(delta_x[1], 2))/delta_x[2]);
+    cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
+
+    //rotating into body frame of hopper 
+    bodyid = mj_name2id(m, mjOBJ_BODY, "rw0");
+    mjtNum rwx_pos[3];
+    mju_copy(rwx_pos, d->xipos + bodyid, 3);
+    cout << "rw pos: " << rwx_pos[0] << " " << rwx_pos[1] << " " << rwx_pos[2] << endl; 
+
+    mjtNum norm = sqrt(mju_pow(delta_x[0],2) + mju_pow(delta_x[1],2) + mju_pow(delta_x[2],2));
     mjtNum rot_quat[4];
-    rot_quat[0] = 1;//cos(-M_PI_4/2);
-    rot_quat[1] = 0;//delta_x[0]*sin(-M_PI_4/2);
-    rot_quat[2] = 0;//delta_x[1]*sin(-M_PI_4/2);
-    rot_quat[3] = 0;//delta_x[2]*sin(-M_PI_4/2);
+    mjtNum theta_rot = atan((rwx_pos[1] - imu_pos[1])/(rwx_pos[0] - imu_pos[0])) - 1.41638;
+    cout << "theta rot: " << theta_rot << endl;
+    rot_quat[0] = cos(theta_rot - M_PI_4/2);
+    rot_quat[1] = delta_x[0]*sin(theta_rot - M_PI_4/2)/norm;
+    rot_quat[2] = delta_x[1]*sin(theta_rot - M_PI_4/2)/norm;
+    rot_quat[3] = delta_x[2]*sin(theta_rot - M_PI_4/2)/norm;
+    
     mju_rotVecQuat(reaction_angles, angles, rot_quat);
     cout << "angles: " << reaction_angles[0] << " " << reaction_angles[1] << " " << reaction_angles[2] << endl;
     //cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
-
-    //transforming into reaction wheel frame from x and y world frame axes
-    /*mjtNum reaction_angles[3];
-    mjtNum rotation_matrix[9];
-    mju_zero(rotation_matrix, 9);
-    mjtNum theta_rot = atan(angle_rot[1]/angle_rot[0]);
-    //cout << "theta rot: " << theta_rot << endl;
-    rotation_matrix[0] = cos(-theta_rot - M_PI/4);
-    rotation_matrix[1] = sin(-theta_rot - M_PI/4);
-    rotation_matrix[3] = -sin(-theta_rot - M_PI/4);
-    rotation_matrix[4] = cos(-theta_rot - M_PI/4);
-    rotation_matrix[8] = 1;
-    mju_rotVecMat(reaction_angles, angles, rotation_matrix);*/
 
     //getting body angular velocities
     bodyid = mj_name2id(m, mjOBJ_BODY, "Link 1");
@@ -316,7 +317,7 @@ void mycontroller(const mjModel* m, mjData* d)
     
 
     //running controller at 200 Hz
-    if (counter % 5 == 0) {
+    if (counter % 1 == 0) {
 
         /*dot_thetax.push_back(xtheta_dot);
         dot_thetay.push_back(ytheta_dot);*/
@@ -337,7 +338,7 @@ void mycontroller(const mjModel* m, mjData* d)
                     9.36444980550883,7.31882606957536,-20.3743982633689,0.0375068252883356,0.298005966853193,-0.0413294610419337,-0.0118339985925592,0.0653,0.00082555;
         ctrl = K_matlab * state;
 
-        cout << ctrl[0] << " " << ctrl[1] << " " << ctrl[2]<< endl;
+        cout << "rw ctrl: " << ctrl[0] << " " << ctrl[1] << " " << ctrl[2]<< endl;
 
         //reaction wheel 1 (x)
         /*cout << "x angle: " << state[0] << endl;
@@ -365,7 +366,7 @@ void mycontroller(const mjModel* m, mjData* d)
 
         mjtNum ctrl_z = ctrl[2];
         //cout << "ctrl z: " << ctrl_z << endl;
-        d->ctrl[actuator_z] = -ctrl_z;//-ctrl_z;
+        d->ctrl[actuator_z] = 0;//-ctrl_z;//-0.5*ctrl_z;//-ctrl_z;
         //cout << " " << endl;
 
         //cout << K[0] << " " << K[1] << " " << K[2] << endl;
