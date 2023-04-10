@@ -48,10 +48,7 @@ mjtNum last_update = 0.0;
 mjtNum ctrl;
 
 // time-invariant K
-Matrix<double, 3, 9> K;
-
-//last control output
-double control[2] = {0, 0};
+MatrixXd K;
 
 int counter = 0;
 
@@ -154,11 +151,11 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     //cout << "calculating A" << endl;
     Matrix<double, 9, 9> A_cont;
     A_cont << MatrixXd::Zero(3, 3), MatrixXd::Identity(3, 3), MatrixXd::Zero(3, 3),
-            mass*l*g*MatrixXd::Ones(3, 3)*b.inverse(), MatrixXd::Zero(3, 6),
-            -mass*l*g*MatrixXd::Ones(3, 3)*b.inverse(), MatrixXd::Zero(3, 6);
+            mass*l*g*b.inverse(), MatrixXd::Zero(3, 6),
+            -mass*l*g*I_rw*a.inverse(), MatrixXd::Zero(3, 6);
     cout << "A_cont: \n" << A_cont << endl;
     Matrix<double, 9, 3> B_cont;
-    B_cont << MatrixXd::Zero(3, 3), -MatrixXd::Ones(3, 3)*b.inverse(), -I_b*a.inverse();
+    B_cont << MatrixXd::Zero(3, 3), -b.inverse(), -I_b*a.inverse();
     cout << "B_cont: " << B_cont << endl;
 
     // discretize continuous time model
@@ -181,25 +178,16 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 9> B_T = B.transpose();
 
     MatrixXd Q = MatrixXd::Identity(9, 9);
-    Q(0, 0) = 10;
+    /*Q(0, 0) = 10;
     Q(1, 1) = 10;
-    Q(2, 2) = 10;
+    Q(2, 2) = 10;*/
     //cout << "Q: " << Q << endl;
     //this is sus
-    Matrix<double, 3, 3> R;
-    R(0, 0) = 1;
-    R(1, 1) = 1;
-    R(2, 2) = 1;
+    MatrixXd R = 1000*MatrixXd::Identity(3, 3);
     MatrixXd P = 10*Q;
     MatrixXd K;
     MatrixXd Pn;
     MatrixXd P2; 
-
-    Matrix<double, 3, 9> K_matlab;
-    K_matlab << -65.2876, 6.2296, 352.4413, -0.1618, 0.7161, 1.1361, 0.9025, 0.4302, 0.0198, 
-    28.5519, -26.0650, -14.4155, 0.1018, -1.8250, -0.1455, 0.1690, -0.3963, 0.9024, 
-    136.2228, 95.9489, -76.3386, 0.0735, 3.5351, -0.3028, -0.3961, 0.8111, 0.4304;
-    return K_matlab;
 
     for (int ricatti = 2; ricatti < 1000; ricatti++){
         //backwards Ricatti recursion
@@ -219,17 +207,8 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
         }
     }
     cout << "Did not converge" << endl;
-    
+    return K;
 }
-
-//*************************************
-void set_position_servo(const mjModel* m, int actuator_no, double kp)
-{
-  //gets the leg motors to lock in place and not move
-  m->actuator_gainprm[10*actuator_no+0] = kp;
-  m->actuator_biasprm[10*actuator_no+1] = -kp;
-}
-//***********************************
 
 void mycontroller(const mjModel* m, mjData* d)
 {
@@ -244,14 +223,14 @@ void mycontroller(const mjModel* m, mjData* d)
     mju_copy(com_mat, d->site_xmat + bodyid, 9);
     mju_copy(imu_pos, d->site_xpos + bodyid, 3);
     mju_mat2Quat(com_pos, com_mat);
-    cout << "com quat: " << com_pos[0] << " " << com_pos[1] << " " << com_pos[2] << " " << com_pos[3] << endl;
-    cout << "imu pos: " << imu_pos[0] << " " << imu_pos[1] << " " << imu_pos[2] << endl;
+    //cout << "com quat: " << com_pos[0] << " " << com_pos[1] << " " << com_pos[2] << " " << com_pos[3] << endl;
+    //cout << "imu pos: " << imu_pos[0] << " " << imu_pos[1] << " " << imu_pos[2] << endl;
     //adding noise to current quaternion orientation (modeling IMU noise)
 
     //rotating into body frame
     mjtNum delta_x[3];
     mju_rotVecQuat(delta_x, imu_pos, com_pos);
-    cout << "com est pos (body): " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
+    //cout << "com est pos (body): " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
 
     //finding angle from z axis for x and y
     mjtNum reaction_angles[3];
@@ -259,13 +238,13 @@ void mycontroller(const mjModel* m, mjData* d)
     angles[0] = atan(delta_x[0]/delta_x[2]);
     angles[1] = atan(delta_x[1]/delta_x[2]);//atan(mju_sqrt(mju_pow(delta_x[0], 2) + mju_pow(delta_x[2], 2))/delta_x[1]);
     angles[2] = 0;//atan(mju_sqrt(mju_pow(delta_x[0], 2) + mju_pow(delta_x[1], 2))/delta_x[2]);
-    cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
+    //cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
 
     //rotating into body frame of hopper 
     bodyid = mj_name2id(m, mjOBJ_BODY, "rw1");
     mjtNum rwx_pos[3];
     mju_copy(rwx_pos, d->xpos + bodyid, 3);
-    cout << "rw pos: " << rwx_pos[0] << " " << rwx_pos[1] << " " << rwx_pos[2] << endl; 
+    //cout << "rw pos: " << rwx_pos[0] << " " << rwx_pos[1] << " " << rwx_pos[2] << endl; 
     mjtNum body_rwx[3];
     mjtNum body_quat[3];
     mju_rotVecQuat(body_rwx, rwx_pos, com_pos);
@@ -274,14 +253,14 @@ void mycontroller(const mjModel* m, mjData* d)
     mjtNum norm = sqrt(mju_pow(delta_x[0],2) + mju_pow(delta_x[1],2) + mju_pow(delta_x[2],2));
     mjtNum rot_quat[4];
     mjtNum theta_rot = atan((body_rwx[1] - body_quat[1])/(body_rwx[0] - body_quat[0])) + 1.55;
-    cout << "theta rot: " << theta_rot << endl;
+    //cout << "theta rot: " << theta_rot << endl;
     rot_quat[0] = cos(theta_rot - M_PI_4/2);
-    rot_quat[1] = delta_x[0]*sin(theta_rot - M_PI_4/2)/norm;
-    rot_quat[2] = delta_x[1]*sin(theta_rot - M_PI_4/2)/norm;
-    rot_quat[3] = delta_x[2]*sin(theta_rot - M_PI_4/2)/norm;
+    rot_quat[1] = 0;//delta_x[0]*sin(theta_rot - M_PI_4/2)/norm;
+    rot_quat[2] = 0;//delta_x[1]*sin(theta_rot - M_PI_4/2)/norm;
+    rot_quat[3] = 1*sin(theta_rot - M_PI_4/2);//delta_x[2]*sin(theta_rot - M_PI_4/2)/norm;
     
     mju_rotVecQuat(reaction_angles, angles, rot_quat);
-    cout << "angles: " << reaction_angles[0] << " " << reaction_angles[1] << " " << reaction_angles[2] << endl;
+    //cout << "angles: " << reaction_angles[0] << " " << reaction_angles[1] << " " << reaction_angles[2] << endl;
     //cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
 
     //getting body angular velocities
@@ -317,14 +296,7 @@ void mycontroller(const mjModel* m, mjData* d)
     
 
     //running controller at 200 Hz
-    if (counter % 1 == 0) {
-
-        /*dot_thetax.push_back(xtheta_dot);
-        dot_thetay.push_back(ytheta_dot);*/
-        int actuator_x = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
-        mjtNum xvel = d->actuator_velocity[actuator_x];
-        int actuator_y = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
-        mjtNum yvel = d->actuator_velocity[actuator_y];
+    if (counter % 5 == 0) {
         int actuator_z = mj_name2id(m, mjOBJ_ACTUATOR, "rwz");
         mjtNum zvel = d->actuator_velocity[actuator_z];
 
@@ -332,11 +304,9 @@ void mycontroller(const mjModel* m, mjData* d)
         state << reaction_angles[0],reaction_angles[1],reaction_angles[2],vel_angles[0],vel_angles[1],vel_angles[2],-xvel,-yvel,-zvel;
 
         Matrix<double, 3, 1> ctrl;
-        Matrix<double, 3, 9> K_matlab;
-        K_matlab << -40.6038026360662, -4.68900462769708, 26.7403636401237, -0.0906376850286823 , 0.224196908063965, 0.162355415373592, 0.0327193698827690,0.0652,-0.0461,
-                    62.9683902271361,2.64277184992056,-2.72798446765594,0.142987127227929,-0.642295913097646,-0.0993941905468881,0.00326971995829481,-0.1542,0.1732,
-                    9.36444980550883,7.31882606957536,-20.3743982633689,0.0375068252883356,0.298005966853193,-0.0413294610419337,-0.0118339985925592,0.0653,0.00082555;
-        ctrl = K_matlab * state;
+        ctrl = K * state;
+
+        cout << "rw speed: " << -xvel << " " << -yvel << endl;
 
         cout << "rw ctrl: " << ctrl[0] << " " << ctrl[1] << " " << ctrl[2]<< endl;
 
@@ -366,7 +336,7 @@ void mycontroller(const mjModel* m, mjData* d)
 
         mjtNum ctrl_z = ctrl[2];
         //cout << "ctrl z: " << ctrl_z << endl;
-        d->ctrl[actuator_z] = -ctrl_z;//-0.5*ctrl_z;//-ctrl_z;
+        d->ctrl[actuator_z] = 0;//-ctrl_z;//-0.5*ctrl_z;//-ctrl_z;
         //cout << " " << endl;
 
         //cout << K[0] << " " << K[1] << " " << K[2] << endl;
@@ -443,9 +413,9 @@ int main(int argc, const char** argv)
     cam.lookat[1] = arr_view[4];
     cam.lookat[2] = arr_view[5];
 
-    //d->qpos[0]=1.57; //pi/2
     //getting K matrix for LQR controls
-    //K = LQR_controller(m, d);
+    MatrixXd controls;
+    K = LQR_controller(m, d);
 
     //converting K matrix to K double
     //Map<MatrixXd>(K, controls.rows(), controls.cols()) = controls;

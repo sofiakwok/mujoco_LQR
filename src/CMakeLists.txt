@@ -1,4 +1,4 @@
-# set(BIN_NAME planar_LQR)
+# set(BIN_NAME LQR_hopper)
 # set(EXEC_NAME LQR_hop)
 
 # find_package(glfw3 REQUIRED)
@@ -31,12 +31,12 @@ message(STATUS "Eigen: " ${EIGEN3_INCLUDE_DIRS})
 # file(GLOB LAPACK_INCLUDES /usr/lib/x86_64-linux-gnu/lapack/*)
 # file(GLOB LIB_ARMADILLO /usr/lib/x86_64-linux-gnu/libarmadillo.so)
 
-# include_directories(planar_LQR ${LAPACK_INCLUDES})
-# include_directories(planar_LQR ${LIB_ARMADILLO})
+# include_directories(LQR_hopper ${LAPACK_INCLUDES})
+# include_directories(LQR_hopper ${LIB_ARMADILLO})
 
-add_executable(planar_LQR planar_LQR.cc)
-target_link_libraries(planar_LQR ${LIB_MUJOCO})
-target_link_libraries(planar_LQR glfw)
-target_link_libraries(planar_LQR Eigen3::Eigen)
+add_executable(LQR_hopper LQR_hopper.cc)
+target_link_libraries(LQR_hopper ${LIB_MUJOCO})
+target_link_libraries(LQR_hopper glfw)
+target_link_libraries(LQR_hopper Eigen3::Eigen)
 
-#target_link_libraries(planar_LQR lapack)
+#target_link_libraries(LQR_hopper lapack)

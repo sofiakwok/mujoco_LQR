@@ -314,6 +314,7 @@ void mycontroller(const mjModel* m, mjData* d)
 
         cout << "K: " << K[0] << " " << K[1] << " " << K[2] << endl;
         cout << "rw: " << -xvel << " " << -yvel << endl;
+        cout << "ctrl: " << ctrl_x << " " << ctrl_y << endl;
 
         //reaction wheel 1 (x)
         /*cout << "x angle: " << state[0] << endl;
@@ -324,7 +325,7 @@ void mycontroller(const mjModel* m, mjData* d)
         cout << "rw speed ctrl (x): " << -K[2]*state[2] << endl;
         cout << "control (x): " << -ctrl_x << endl;*/
         //cout << "ctrl x: " << ctrl_x << endl;
-        d->ctrl[actuator_x] = -0.35*ctrl_x;
+        d->ctrl[actuator_x] = -ctrl_x;
 
         //reaction wheel 2 (y)
         /*cout << "y angle: " << state[0] << endl;
@@ -335,7 +336,7 @@ void mycontroller(const mjModel* m, mjData* d)
         cout << "rw speed ctrl (y): " << -K[2]*state[2] << endl;
         cout << "control (y): " << -ctrl_y << endl;*/
         //cout << "ctrl y: " << ctrl_y << endl;
-        d->ctrl[actuator_y] = -0.35*ctrl_y;
+        d->ctrl[actuator_y] = -ctrl_y;
 
         //cout << "ctrl z: " << ctrl_z << endl;
         //d->ctrl[actuator_z] = 0;//-ctrl_z;//-0.5*ctrl_z;//-ctrl_z;
