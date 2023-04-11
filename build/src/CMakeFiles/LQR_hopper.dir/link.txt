@@ -1,1 +1,1 @@
-/usr/bin/c++    -rdynamic CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o  -o ../../bin/LQR_hopper   -L/home/sofia/mujoco_LQR/lib  -Wl,-rpath,/home/sofia/mujoco_LQR/lib ../../lib/libmujoco.so.2.3.2 /usr/lib/x86_64-linux-gnu/libglfw.so.3.3 
+/usr/bin/c++    -rdynamic CMakeFiles/LQR_hopper.dir/kalman.cpp.o CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o  -o ../../bin/LQR_hopper   -L/home/sofia/mujoco_LQR/lib  -Wl,-rpath,/home/sofia/mujoco_LQR/lib ../../lib/libmujoco.so.2.3.2 /usr/lib/x86_64-linux-gnu/libglfw.so.3.3 

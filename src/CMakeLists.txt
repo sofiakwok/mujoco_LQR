@@ -33,8 +33,8 @@ message(STATUS "Eigen: " ${EIGEN3_INCLUDE_DIRS})
 
 # include_directories(LQR_hopper ${LAPACK_INCLUDES})
 # include_directories(LQR_hopper ${LIB_ARMADILLO})
-
-add_executable(LQR_hopper LQR_hopper.cc)
+set(SOURCE_FILES kalman.cpp LQR_hopper.cc)
+add_executable(LQR_hopper ${SOURCE_FILES})
 target_link_libraries(LQR_hopper ${LIB_MUJOCO})
 target_link_libraries(LQR_hopper glfw)
 target_link_libraries(LQR_hopper Eigen3::Eigen)

@@ -18,6 +18,8 @@
 #include <vector>
 #include "../include/mujoco/spline.h"
 
+#include "kalman.hpp"
+
 using namespace std;
 using namespace Eigen;
 
@@ -51,6 +53,16 @@ mjtNum ctrl;
 MatrixXd K;
 
 int counter = 0;
+
+//Kalman filter
+MatrixXd A;
+MatrixXd C;
+MatrixXd Q_k;
+MatrixXd R_k;
+MatrixXd P_k;
+KalmanFilter kf;
+
+VectorXd state(9);
 
 vector<double> rw_x;
 vector<double> rw_y;
@@ -169,7 +181,6 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     expo = discretize.exp();
     //cout << "expo: " << expo << endl;
     //getting 3x3 A matrix
-    MatrixXd A;
     A = expo.block<9, 9>(0, 0);
     cout << "A: " << A << endl;
     MatrixXd B = expo.block<9, 3>(0, 9);
@@ -210,6 +221,18 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     return K;
 }
 
+KalmanFilter Kalman(){
+    double dt = 1/1000;
+    C = MatrixXd::Identity(3, 9);
+    Q_k = MatrixXd::Identity(9, 9)*0.05;
+    R_k = MatrixXd::Identity(3, 3);
+    P_k = MatrixXd::Identity(9, 9)*0.1;
+    KalmanFilter kf(dt, A, C, Q_k, R_k, P_k);
+    VectorXd x0 = VectorXd::Zero(9, 1);
+    kf.init(0, x0);
+    return kf;
+}
+
 void mycontroller(const mjModel* m, mjData* d)
 {
     int bodyid;
@@ -248,7 +271,7 @@ void mycontroller(const mjModel* m, mjData* d)
     ref_axis[2] = 0;
     mjtNum body_axis[3];
     mju_rotVecQuat(body_axis, ref_axis, com_pos);
-    cout << "x body: " << body_axis[0] << " " << body_axis[1] << " " << body_axis[2] << endl;
+    cout << "x axis: " << body_axis[0] << " " << body_axis[1] << " " << body_axis[2] << endl;
 
     mjtNum norm = sqrt(mju_pow(delta_x[0],2) + mju_pow(delta_x[1],2) + mju_pow(delta_x[2],2));
     mjtNum rot_quat[4];
@@ -262,17 +285,6 @@ void mycontroller(const mjModel* m, mjData* d)
     mju_rotVecQuat(reaction_angles, angles, rot_quat);
     cout << "angles: " << reaction_angles[0] << " " << reaction_angles[1] << " " << reaction_angles[2] << endl;
     //cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
-
-    bodyid = mj_name2id(m, mjOBJ_BODY, "Link 1");
-    mjtNum trans_vel[3];
-    mjtNum com_vel[6];
-    mjtNum vel_angles[3];
-    mju_copy(com_vel, d->cvel + bodyid, 6);
-    cout << "com vel: " << com_vel[0] << " " << com_vel[1] << " " << com_vel[2] << " " << com_vel[3] << " " << com_vel[4] << " " << com_vel[5] << endl;
-    trans_vel[0] = 0;//com_vel[3];
-    trans_vel[1] = 0;//com_vel[4];
-    trans_vel[2] = 0;//com_vel[5];
-    mju_rotVecQuat(vel_angles, trans_vel, rot_quat);
 
     //fix leg angles 
     //cout << "fixing leg angles" << endl;
@@ -296,6 +308,15 @@ void mycontroller(const mjModel* m, mjData* d)
     x_theta.push_back(reaction_angles[0]);
     y_theta.push_back(reaction_angles[1]);
     z_theta.push_back(reaction_angles[2]);
+
+    VectorXd meas(3);
+    meas << reaction_angles[0], reaction_angles[1], reaction_angles[2];
+    kf.update(meas);  
+
+    mjtNum vel_angles[3];
+    vel_angles[0] = (kf.state()[0] - state[0])/0.001;
+    vel_angles[1] = (kf.state()[1] - state[1])/0.001;
+    vel_angles[2] = (kf.state()[2] - state[2])/0.001;
     dot_thetax.push_back(vel_angles[0]);
     dot_thetay.push_back(vel_angles[1]);
     dot_thetaz.push_back(vel_angles[2]);
@@ -347,6 +368,7 @@ void mycontroller(const mjModel* m, mjData* d)
         //cout << "done with controller" << endl;
     }
     counter += 1;
+    state = kf.state();
 }
 
 // main function
@@ -418,9 +440,10 @@ int main(int argc, const char** argv)
     MatrixXd controls;
     K = LQR_controller(m, d);
 
-    //converting K matrix to K double
-    //Map<MatrixXd>(K, controls.rows(), controls.cols()) = controls;
     mjcb_control = mycontroller;
+
+    //setting up Kalman filter
+    kf = Kalman();
 
     // use the first while condition if you want to simulate for a period.
     while( !glfwWindowShouldClose(window))

@@ -152,6 +152,33 @@ LQR_hopper.cc.s:
 	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.s
 .PHONY : LQR_hopper.cc.s
 
+kalman.o: kalman.cpp.o
+
+.PHONY : kalman.o
+
+# target to build an object file
+kalman.cpp.o:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/kalman.cpp.o
+.PHONY : kalman.cpp.o
+
+kalman.i: kalman.cpp.i
+
+.PHONY : kalman.i
+
+# target to preprocess a source file
+kalman.cpp.i:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/kalman.cpp.i
+.PHONY : kalman.cpp.i
+
+kalman.s: kalman.cpp.s
+
+.PHONY : kalman.s
+
+# target to generate assembly for a file
+kalman.cpp.s:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/kalman.cpp.s
+.PHONY : kalman.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -164,6 +191,9 @@ help:
 	@echo "... LQR_hopper.o"
 	@echo "... LQR_hopper.i"
 	@echo "... LQR_hopper.s"
+	@echo "... kalman.o"
+	@echo "... kalman.i"
+	@echo "... kalman.s"
 .PHONY : help
 
 
