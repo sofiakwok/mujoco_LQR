@@ -231,7 +231,7 @@ void mycontroller(const mjModel* m, mjData* d)
     mjtNum delta_x[3];
     mju_copy(delta_x, imu_pos, 3);
     //mju_rotVecQuat(delta_x, imu_pos, com_pos);
-    cout << "com pos (body): " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
+    //cout << "com pos (body): " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
 
     //finding angle from z axis for x and y
     mjtNum reaction_angles[3];
@@ -242,46 +242,37 @@ void mycontroller(const mjModel* m, mjData* d)
     //cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
 
     //rotating into body frame of hopper 
-    bodyid = mj_name2id(m, mjOBJ_BODY, "Link 2");
-    mjtNum link_pos[3];
-    mju_copy(link_pos, d->site_xpos + bodyid, 3);
-    mjtNum link_quat[4];
-    link_quat[0] = 0.258819;
-    link_quat[1] = 0;
-    link_quat[2] = 0.965926;
-    link_quat[3] = 0;
-    mjtNum opp_quat[4];
-    mju_negQuat(opp_quat, link_quat);
-    mjtNum rwx_pos[3];
-    mju_rotVecQuat(rwx_pos, link_pos, opp_quat);
-
-    cout << "link pos: " << rwx_pos[0] << " " << rwx_pos[1] << " " << rwx_pos[2] << endl; 
+    mjtNum ref_axis[3];
+    ref_axis[0] = 1;
+    ref_axis[1] = 0;
+    ref_axis[2] = 0;
+    mjtNum body_axis[3];
+    mju_rotVecQuat(body_axis, ref_axis, com_pos);
+    cout << "x body: " << body_axis[0] << " " << body_axis[1] << " " << body_axis[2] << endl;
 
     mjtNum norm = sqrt(mju_pow(delta_x[0],2) + mju_pow(delta_x[1],2) + mju_pow(delta_x[2],2));
     mjtNum rot_quat[4];
-    mjtNum theta_rot = 0;//atan((rwx_pos[1] - delta_x[1])/(rwx_pos[0] - delta_x[0]));
-    cout << "theta rot: " << -theta_rot << endl;
-    rot_quat[0] = cos(-theta_rot - M_PI_4/2);
-    rot_quat[1] = delta_x[0]*sin(-theta_rot - M_PI_4/2)/norm;
-    rot_quat[2] = delta_x[1]*sin(-theta_rot - M_PI_4/2)/norm;
-    rot_quat[3] = delta_x[2]*sin(-theta_rot - M_PI_4/2)/norm;
+    mjtNum theta_rot = atan(body_axis[1]/body_axis[0]);
+    cout << "theta rot: " << theta_rot << endl;
+    rot_quat[0] = cos(theta_rot - M_PI_4/2);
+    rot_quat[1] = delta_x[0]*sin(theta_rot - M_PI_4/2)/norm;
+    rot_quat[2] = delta_x[1]*sin(theta_rot - M_PI_4/2)/norm;
+    rot_quat[3] = delta_x[2]*sin(theta_rot - M_PI_4/2)/norm;
     
     mju_rotVecQuat(reaction_angles, angles, rot_quat);
     cout << "angles: " << reaction_angles[0] << " " << reaction_angles[1] << " " << reaction_angles[2] << endl;
     //cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
 
-    //getting body angular velocities
     bodyid = mj_name2id(m, mjOBJ_BODY, "Link 1");
-    mjtNum com_vel[6];
     mjtNum trans_vel[3];
+    mjtNum com_vel[6];
     mjtNum vel_angles[3];
     mju_copy(com_vel, d->cvel + bodyid, 6);
-    //cout << "com vel: " << com_vel[0] << " " << com_vel[1] << " " << com_vel[2] << " " << com_vel[3] << " " << com_vel[4] << " " << com_vel[5] << endl;
-    trans_vel[0] = com_vel[3];
-    trans_vel[1] = com_vel[4];
-    trans_vel[2] = com_vel[5];
+    cout << "com vel: " << com_vel[0] << " " << com_vel[1] << " " << com_vel[2] << " " << com_vel[3] << " " << com_vel[4] << " " << com_vel[5] << endl;
+    trans_vel[0] = 0;//com_vel[3];
+    trans_vel[1] = 0;//com_vel[4];
+    trans_vel[2] = 0;//com_vel[5];
     mju_rotVecQuat(vel_angles, trans_vel, rot_quat);
-    //mju_rotVecMat(vel_angles, trans_vel, rotation_matrix);
 
     //fix leg angles 
     //cout << "fixing leg angles" << endl;
@@ -296,17 +287,21 @@ void mycontroller(const mjModel* m, mjData* d)
     mjtNum xvel = d->actuator_velocity[actuator_x];
     int actuator_y = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
     mjtNum yvel = d->actuator_velocity[actuator_y];
+    int actuator_z = mj_name2id(m, mjOBJ_ACTUATOR, "rwz");
+    mjtNum zvel = d->actuator_velocity[actuator_z];
     rw_x.push_back(xvel);
     rw_y.push_back(yvel);
-    cout << "rw speed: " << -xvel << " " << -yvel << endl;
+    rw_z.push_back(zvel);
+    cout << "rw speed: " << -xvel << " " << -yvel << " " << -zvel << endl;
     x_theta.push_back(reaction_angles[0]);
     y_theta.push_back(reaction_angles[1]);
+    z_theta.push_back(reaction_angles[2]);
+    dot_thetax.push_back(vel_angles[0]);
+    dot_thetay.push_back(vel_angles[1]);
+    dot_thetaz.push_back(vel_angles[2]);
     
-
     //running controller at 200 Hz
     if (counter % 5 == 0) {
-        int actuator_z = mj_name2id(m, mjOBJ_ACTUATOR, "rwz");
-        mjtNum zvel = d->actuator_velocity[actuator_z];
 
         Matrix<double, 9, 1> state;
         state << reaction_angles[0],reaction_angles[1],reaction_angles[2],vel_angles[0],vel_angles[1],vel_angles[2],-xvel,-yvel,-zvel;
@@ -348,7 +343,7 @@ void mycontroller(const mjModel* m, mjData* d)
         //cout << K[0] << " " << K[1] << " " << K[2] << endl;
         ctrl_rwx.push_back(-ctrl_x);
         ctrl_rwy.push_back(-ctrl_y);
-        //ctrl_rwz.push_back(-ctrl_z);
+        ctrl_rwz.push_back(-ctrl_z);
         //cout << "done with controller" << endl;
     }
     counter += 1;
@@ -463,28 +458,28 @@ int main(int argc, const char** argv)
     std::ofstream myfile;
     myfile.open ("rwdata.csv");
     for (int i = 0; i < rw_x.size(); i++){
-        myfile << to_string(rw_x[i]) + "," + to_string(rw_y[i]) + "\n";
+        myfile << to_string(rw_x[i]) + "," + to_string(rw_y[i]) + ", " + to_string(rw_z[i]) + "\n";
     }
     myfile.close();
 
     std::ofstream ctrlfile;
     ctrlfile.open ("ctrldata.csv");
     for (int i = 0; i < ctrl_rwx.size(); i++){
-        ctrlfile << to_string(ctrl_rwx[i]) + "," + to_string(ctrl_rwy[i]) + "\n";
+        ctrlfile << to_string(ctrl_rwx[i]) + "," + to_string(ctrl_rwy[i]) + ", " + to_string(ctrl_rwz[i]) + "\n";
     }
     ctrlfile.close();
 
     std::ofstream anglefile;
     anglefile.open ("angles.csv");
     for (int i = 0; i < x_theta.size(); i++){
-        anglefile << to_string(x_theta[i]) + "," + to_string(y_theta[i]) + "\n";
+        anglefile << to_string(x_theta[i]) + "," + to_string(y_theta[i]) + ", " + to_string(z_theta[i]) + "\n";
     }
     anglefile.close();//*/
 
     std::ofstream dot_angle;
     dot_angle.open ("dotangles.csv");
     for (int i = 0; i < dot_thetax.size(); i++){
-        dot_angle << to_string(dot_thetax[i]) + "," + to_string(dot_thetay[i]) + "\n";
+        dot_angle << to_string(dot_thetax[i]) + "," + to_string(dot_thetay[i]) + ", " + to_string(dot_thetaz[i]) + "\n";
     }
     dot_angle.close();//*/
 
