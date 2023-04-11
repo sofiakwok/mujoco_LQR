@@ -62,7 +62,7 @@ MatrixXd R_k;
 MatrixXd P_k;
 KalmanFilter kf;
 
-VectorXd state(9);
+VectorXd last_state(9);
 
 vector<double> rw_x;
 vector<double> rw_y;
@@ -314,9 +314,10 @@ void mycontroller(const mjModel* m, mjData* d)
     kf.update(meas);  
 
     mjtNum vel_angles[3];
-    vel_angles[0] = (kf.state()[0] - state[0])/0.001;
-    vel_angles[1] = (kf.state()[1] - state[1])/0.001;
-    vel_angles[2] = (kf.state()[2] - state[2])/0.001;
+    vel_angles[0] = (kf.state()[0] - last_state[0])/0.005;
+    vel_angles[1] = (kf.state()[1] - last_state[1])/0.005;
+    vel_angles[2] = (kf.state()[2] - last_state[2])/0.005;
+
     dot_thetax.push_back(vel_angles[0]);
     dot_thetay.push_back(vel_angles[1]);
     dot_thetaz.push_back(vel_angles[2]);
@@ -324,8 +325,10 @@ void mycontroller(const mjModel* m, mjData* d)
     //running controller at 200 Hz
     if (counter % 5 == 0) {
 
+        last_state = kf.state();
+
         Matrix<double, 9, 1> state;
-        state << reaction_angles[0],reaction_angles[1],reaction_angles[2],vel_angles[0],vel_angles[1],vel_angles[2],-xvel,-yvel,-zvel;
+        state << reaction_angles[0],reaction_angles[1],reaction_angles[2],vel_angles[0],vel_angles[1],vel_angles[2],xvel,yvel,zvel;
 
         Matrix<double, 3, 1> ctrl;
         ctrl = K * state;
@@ -368,7 +371,6 @@ void mycontroller(const mjModel* m, mjData* d)
         //cout << "done with controller" << endl;
     }
     counter += 1;
-    state = kf.state();
 }
 
 // main function
