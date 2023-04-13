@@ -1,6 +1,7 @@
 file(REMOVE_RECURSE
   "../../bin/planar_LQR"
   "../../bin/planar_LQR.pdb"
+  "CMakeFiles/planar_LQR.dir/kalman.cpp.o"
   "CMakeFiles/planar_LQR.dir/planar_LQR.cc.o"
 )
 

@@ -259,21 +259,28 @@ void mycontroller(const mjModel* m, mjData* d)
     //mju_rotVecQuat(imu_pos, imu_pos, com_quat);
     //cout << "com pos (body): " << imu_pos[0] << " " << imu_pos[1] << " " << imu_pos[2] << endl;
 
+    //rotating into body frame of hopper (45 deg)
+    mjtNum ref_axis[3];
+    ref_axis[0] = 1;
+    ref_axis[1] = 0;
+    ref_axis[2] = 0;
+    mjtNum body_axis[3];
+    mju_rotVecQuat(body_axis, ref_axis, com_quat);
+    cout << "x axis: " << body_axis[0] << " " << body_axis[1] << " " << body_axis[2] << endl;
+
     //finding angle from z axis for x and y
     mjtNum reaction_angles[3];
     reaction_angles[0] = atan(imu_pos[0]/imu_pos[2]);
     reaction_angles[1] = atan(imu_pos[1]/imu_pos[2]);//atan(mju_sqrt(mju_pow(imu_pos[0], 2) + mju_pow(imu_pos[2], 2))/imu_pos[1]);
-    reaction_angles[2] = 0;//atan(mju_sqrt(mju_pow(imu_pos[0], 2) + mju_pow(imu_pos[1], 2))/imu_pos[2]);
+    reaction_angles[2] = 0;
     cout << "angles: " << reaction_angles[0] << " " << reaction_angles[1] << " " << reaction_angles[2] << endl;
 
-    //rotating into body frame of hopper (45 deg)
+    mjtNum theta_rot = atan(body_axis[1]/body_axis[0]);
     mjtNum body_quat[4];
-    mjtNum norm;
-    norm = sqrt(mju_pow(imu_pos[0],2) + mju_pow(imu_pos[1],2) + mju_pow(imu_pos[2],2));
-    body_quat[0] = cos(-M_PI_4/2);
+    body_quat[0] = cos(theta_rot - M_PI_4/2);
     body_quat[1] = 0;
     body_quat[2] = 0;
-    body_quat[3] = sin(-M_PI_4/2);
+    body_quat[3] = sin(theta_rot - M_PI_4/2);
     mjtNum angles[3];
     mju_rotVecQuat(angles, reaction_angles, body_quat);
     cout << "body: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
@@ -433,7 +440,6 @@ int main(int argc, const char** argv)
     cam.lookat[2] = arr_view[5];
 
     //getting K matrix for LQR controls
-    MatrixXd controls;
     K = LQR_controller(m, d);
 
     mjcb_control = mycontroller;

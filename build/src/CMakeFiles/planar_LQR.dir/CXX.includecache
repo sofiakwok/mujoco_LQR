@@ -84,6 +84,10 @@ sstream
 string
 -
 
+/home/sofia/mujoco_LQR/src/kalman.hpp
+Eigen/Dense
+-
+
 /home/sofia/mujoco_LQR/src/planar_LQR.cc
 stdbool.h
 -
@@ -121,6 +125,8 @@ vector
 -
 ../include/mujoco/spline.h
 /home/sofia/mujoco_LQR/include/mujoco/spline.h
+kalman.hpp
+/home/sofia/mujoco_LQR/src/kalman.hpp
 
 /usr/include/eigen3/Eigen/Cholesky
 Core
