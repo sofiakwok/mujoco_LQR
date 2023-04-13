@@ -193,7 +193,7 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Q(2, 2) = 10;
     //cout << "Q: " << Q << endl;
     //this is sus
-    MatrixXd R = MatrixXd::Identity(3, 3)*0.25;
+    MatrixXd R = MatrixXd::Identity(3, 3)*0.55;
     MatrixXd P = 10*Q;
     MatrixXd K;
     MatrixXd Pn;
@@ -335,39 +335,20 @@ void mycontroller(const mjModel* m, mjData* d)
         cout << "\n" << "rw ctrl: " << ctrl[0] << " " << ctrl[1] << " " << ctrl[2]<< endl;
 
         //reaction wheel 1 (x)
-        /*cout << "x angle: " << state[0] << endl;
-        cout << "x angle ctrl: " << -K[0]*state[0] << endl;
-        //cout << "x speed: " << state[1] << endl;
-        cout << "x speed ctrl: " << -K[1]*state[1] << endl;
-        cout << "rw speed (x): " << state[2] << endl;
-        cout << "rw speed ctrl (x): " << -K[2]*state[2] << endl;
-        cout << "control (x): " << -ctrl_x << endl;*/
         mjtNum ctrl_x = ctrl[0];
         //cout << "ctrl x: " << ctrl_x << endl;
         d->ctrl[actuator_x] = -ctrl_x;
 
         //reaction wheel 2 (y)
-        /*cout << "y angle: " << state[0] << endl;
-        cout << "y angle ctrl: " << -K[0]*state[0] << endl;
-        //cout << "y speed: " << state[1] << endl;
-        cout << "y speed ctrl: " << -K[1]*state[1] << endl;
-        cout << "rw speed (y): " << state[2] << endl;
-        cout << "rw speed ctrl (y): " << -K[2]*state[2] << endl;
-        cout << "control (y): " << -ctrl_y << endl;*/
         mjtNum ctrl_y = ctrl[1];
-        //cout << "ctrl y: " << ctrl_y << endl;
         d->ctrl[actuator_y] = -ctrl_y;
 
         mjtNum ctrl_z = ctrl[2];
-        //cout << "ctrl z: " << ctrl_z << endl;
         d->ctrl[actuator_z] = 0;//-ctrl_z;//-0.5*ctrl_z;
-        //cout << " " << endl;
 
-        //cout << K[0] << " " << K[1] << " " << K[2] << endl;
         ctrl_rwx.push_back(-ctrl_x);
         ctrl_rwy.push_back(-ctrl_y);
         ctrl_rwz.push_back(-ctrl_z);
-        //cout << "done with controller" << endl;
     }
     counter += 1;
     last_state = kf.state();
