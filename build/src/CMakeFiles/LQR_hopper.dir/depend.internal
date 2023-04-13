@@ -11,7 +11,6 @@ src/CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o
  ../include/mujoco/mjui.h
  ../include/mujoco/mjvisualize.h
  ../include/mujoco/mujoco.h
- /home/sofia/mujoco_LQR/include/mujoco/spline.h
  /home/sofia/mujoco_LQR/src/LQR_hopper.cc
  /home/sofia/mujoco_LQR/src/kalman.hpp
  /usr/include/eigen3/Eigen/Cholesky

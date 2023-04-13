@@ -16,7 +16,6 @@
 #include <unsupported/Eigen/MatrixFunctions>
 #include <chrono>
 #include <vector>
-#include "../include/mujoco/spline.h"
 
 #include "kalman.hpp"
 
@@ -194,7 +193,7 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Q(2, 2) = 10;*/
     //cout << "Q: " << Q << endl;
     //this is sus
-    MatrixXd R = 10*MatrixXd::Identity(3, 3);
+    MatrixXd R = MatrixXd::Identity(3, 3)*10;
     MatrixXd P = 10*Q;
     MatrixXd K;
     MatrixXd Pn;
@@ -361,7 +360,7 @@ void mycontroller(const mjModel* m, mjData* d)
 
         mjtNum ctrl_z = ctrl[2];
         //cout << "ctrl z: " << ctrl_z << endl;
-        d->ctrl[actuator_z] = 0;//-ctrl_z;//-0.5*ctrl_z;//-ctrl_z;
+        d->ctrl[actuator_z] = 0;//-ctrl_z;//-0.5*ctrl_z;
         //cout << " " << endl;
 
         //cout << K[0] << " " << K[1] << " " << K[2] << endl;
@@ -394,7 +393,7 @@ int main(int argc, const char** argv)
     // make data
     d = mj_makeData(m);
 
-    mjtNum theta = 0;//0.17453/1.5; //10 degrees
+    mjtNum theta = 0;//0.17453/2.5; //10 degrees
     
     //change first 7 values of d to change starting position of hopper
     //changing xyz position
