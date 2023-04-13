@@ -188,12 +188,12 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
     Matrix<double, 3, 9> B_T = B.transpose();
 
     MatrixXd Q = MatrixXd::Identity(9, 9);
-    /*Q(0, 0) = 10;
+    Q(0, 0) = 10;
     Q(1, 1) = 10;
-    Q(2, 2) = 10;*/
+    Q(2, 2) = 10;
     //cout << "Q: " << Q << endl;
     //this is sus
-    MatrixXd R = MatrixXd::Identity(3, 3)*10;
+    MatrixXd R = MatrixXd::Identity(3, 3)*0.25;
     MatrixXd P = 10*Q;
     MatrixXd K;
     MatrixXd Pn;
