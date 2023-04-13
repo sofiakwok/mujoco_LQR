@@ -245,12 +245,12 @@ void mycontroller(const mjModel* m, mjData* d)
     bodyid = mj_name2id(m, mjOBJ_SITE, "imu");
     mju_copy(com_mat, d->site_xmat + bodyid, 9);
     mju_mat2Quat(com_quat, com_mat);
-    cout << com_quat[0] << " " << com_quat[1] << " " << com_quat[2] << " " << com_quat[3] << endl;
-    bodyid = mj_name2id(m, mjOBJ_SENSOR, "base-pos");
-    mju_copy(imu_pos, d->sensordata + bodyid, 3);
-    cout << imu_pos[0] << " " << imu_pos[1] << " " << imu_pos[2] << endl;
+    //cout << com_quat[0] << " " << com_quat[1] << " " << com_quat[2] << " " << com_quat[3] << endl;
+    mju_copy(imu_pos, d->site_xpos + bodyid, 3);
+    cout << "imu: " << imu_pos[0] << " " << imu_pos[1] << " " << imu_pos[2] << endl;
     bodyid = mj_name2id(m, mjOBJ_SENSOR, "base-linear-velocity");
-    mju_copy(vel_angles, d->sensordata + bodyid, 3);
+    /*mju_copy(vel_angles, d->sensordata + bodyid, 3);
+    cout << vel_angles[0] << " " << vel_angles[1] << " " << vel_angles[2] << endl;*/
 
     //cout << "com quat: " << com_quat[0] << " " << com_quat[1] << " " << com_quat[2] << " " << com_quat[3] << endl;
     //cout << "imu pos: " << imu_pos[0] << " " << imu_pos[1] << " " << imu_pos[2] << endl;
@@ -261,32 +261,24 @@ void mycontroller(const mjModel* m, mjData* d)
 
     //finding angle from z axis for x and y
     mjtNum reaction_angles[3];
+    reaction_angles[0] = atan(imu_pos[0]/imu_pos[2]);
+    reaction_angles[1] = atan(imu_pos[1]/imu_pos[2]);//atan(mju_sqrt(mju_pow(imu_pos[0], 2) + mju_pow(imu_pos[2], 2))/imu_pos[1]);
+    reaction_angles[2] = 0;//atan(mju_sqrt(mju_pow(imu_pos[0], 2) + mju_pow(imu_pos[1], 2))/imu_pos[2]);
+    cout << "angles: " << reaction_angles[0] << " " << reaction_angles[1] << " " << reaction_angles[2] << endl;
+
+    //rotating into body frame of hopper (45 deg)
+    mjtNum body_quat[4];
+    mjtNum norm;
+    norm = sqrt(mju_pow(imu_pos[0],2) + mju_pow(imu_pos[1],2) + mju_pow(imu_pos[2],2));
+    body_quat[0] = cos(-M_PI_4/2);
+    body_quat[1] = 0;
+    body_quat[2] = 0;
+    body_quat[3] = sin(-M_PI_4/2);
     mjtNum angles[3];
-    angles[0] = atan(imu_pos[0]/imu_pos[2]);
-    angles[1] = atan(imu_pos[1]/imu_pos[2]);//atan(mju_sqrt(mju_pow(imu_pos[0], 2) + mju_pow(imu_pos[2], 2))/imu_pos[1]);
-    angles[2] = 0;//atan(mju_sqrt(mju_pow(imu_pos[0], 2) + mju_pow(imu_pos[1], 2))/imu_pos[2]);
-    //cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
-
-    //rotating into body frame of hopper 
-    mjtNum ref_axis[3];
-    ref_axis[0] = 1;
-    ref_axis[1] = 0;
-    ref_axis[2] = 0;
-    mjtNum body_axis[3];
-    mju_rotVecQuat(body_axis, ref_axis, com_quat);
-    //cout << "x axis: " << body_axis[0] << " " << body_axis[1] << " " << body_axis[2] << endl;
-
-    mjtNum norm = sqrt(mju_pow(imu_pos[0],2) + mju_pow(imu_pos[1],2) + mju_pow(imu_pos[2],2));
-    mjtNum rot_quat[4];
-    mjtNum theta_rot = 0;//atan(body_axis[1]/body_axis[0]);
-    //cout << "theta rot: " << theta_rot << endl;
-    rot_quat[0] = cos(theta_rot - M_PI_4/2);
-    rot_quat[1] = imu_pos[0]*sin(theta_rot - M_PI_4/2)/norm;
-    rot_quat[2] = imu_pos[1]*sin(theta_rot - M_PI_4/2)/norm;
-    rot_quat[3] = imu_pos[2]*sin(theta_rot - M_PI_4/2)/norm;
+    mju_rotVecQuat(angles, reaction_angles, body_quat);
+    cout << "body: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
     
-    mju_rotVecQuat(reaction_angles, angles, rot_quat);
-    //cout << "angles: " << reaction_angles[0] << " " << reaction_angles[1] << " " << reaction_angles[2] << endl;
+    //cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
     //cout << "angles: " << angles[0] << " " << angles[1] << " " << angles[2] << endl;
 
     //fix leg angles 
@@ -307,20 +299,19 @@ void mycontroller(const mjModel* m, mjData* d)
     rw_x.push_back(xvel);
     rw_y.push_back(yvel);
     rw_z.push_back(zvel);
-    //cout << "rw speed: " << -xvel << " " << -yvel << " " << -zvel << endl;
-    x_theta.push_back(reaction_angles[0]);
-    y_theta.push_back(reaction_angles[1]);
-    z_theta.push_back(reaction_angles[2]);
+    cout << "rw speed: " << -xvel << " " << -yvel << " " << -zvel << endl;
+    x_theta.push_back(angles[0]);
+    y_theta.push_back(angles[1]);
+    z_theta.push_back(angles[2]);
 
     VectorXd meas(3);
-    meas << reaction_angles[0], reaction_angles[1], reaction_angles[2];
+    meas << angles[0], angles[1], angles[2];
     kf.update(meas);  
-
     
-    /*vel_angles[0] = (kf.state()[0] - last_state[0])/0.001;
+    vel_angles[0] = (kf.state()[0] - last_state[0])/0.001;
     vel_angles[1] = (kf.state()[1] - last_state[1])/0.001;
     vel_angles[2] = (kf.state()[2] - last_state[2])/0.001;
-    cout << "theta dot: " << vel_angles[0] << " " << vel_angles[1] << " " << vel_angles[2] << endl;*/
+    cout << "theta dot: " << vel_angles[0] << " " << vel_angles[1] << " " << vel_angles[2] << endl;
 
     dot_thetax.push_back(vel_angles[0]);
     dot_thetay.push_back(vel_angles[1]);
@@ -330,12 +321,12 @@ void mycontroller(const mjModel* m, mjData* d)
     if (counter % 5 == 0) {
 
         Matrix<double, 9, 1> state;
-        state << reaction_angles[0],reaction_angles[1],reaction_angles[2],vel_angles[0],vel_angles[1],vel_angles[2],xvel,yvel,zvel;
+        state << angles[0],angles[1],angles[2],vel_angles[0],vel_angles[1],vel_angles[2],xvel,yvel,zvel;
 
         Matrix<double, 3, 1> ctrl;
         ctrl = K * state;
 
-        //cout << "rw ctrl: " << ctrl[0] << " " << ctrl[1] << " " << ctrl[2]<< endl;
+        cout << "\n" << "rw ctrl: " << ctrl[0] << " " << ctrl[1] << " " << ctrl[2]<< endl;
 
         //reaction wheel 1 (x)
         /*cout << "x angle: " << state[0] << endl;
