@@ -19,6 +19,15 @@ using BenchmarkTools
 # cross(v, x) is equal to skew(v)*x (cross product is linear operator)
 skew(v) = [0 -v[3] v[2]; v[3] 0 -v[1]; -v[2] v[1] 0]
 
+function axis_angle_to_quat(ω; tol = 1e-12)
+    norm_ω = norm(ω)
+    if norm_ω >= tol
+        return [cos(norm_ω/2); ω/norm_ω*sin(norm_ω/2)]
+    else
+        return [1; 0; 0; 0]
+    end
+end
+
 # Visualize hopper
 function visualize!(mvis::MechanismVisualizer,
     times::AbstractVector{<:Real},
@@ -42,6 +51,12 @@ function visualize!(mvis::MechanismVisualizer,
     MeshCat.setanimation!(mvis, anim)
 end
 
+function L_mult(q)
+    qs = q[1]
+    qv = q[2:4]
+    return [qs -qv'; qv qs*I + skew(qv)]
+end
+
 # Attitude jacobian (from axis-angle)
 function G(q)
     qs = q[1]
@@ -62,7 +77,9 @@ E(x) = BlockDiagonal([0.5*G(x[1:4]), quat_to_rot(x[1:4]), convert.(eltype(x), I(
 E_T(x) = BlockDiagonal([2*G(x[1:4])', quat_to_rot(x[1:4])', 1.0*I(length(x) - 7)])
 
 # Dynamics with constraints
-function dynamics(state, x, u; k_p = 0, k_d = 0)
+function dynamics(robot, x, u; k_p = 0, k_d = 0)
+    T = promote_type(eltype(x), eltype(u))
+    state = MechanismState{T}(robot)
     # Get config and velocity
     q = x[1:14]
     v = x[15:end]
@@ -118,7 +135,7 @@ function closed_loop_constraint(q, robot)
     link1 = findbody(robot, "link1")
     link3 = findbody(robot, "link3")
     point_in_world = transform(state, Point3D(default_frame(link1), [0.27; 0; 0]), default_frame(link3))
-    return point_in_world.v[[1, 3]] - [0.1; 0] # Should always be zero
+    return point_in_world.v[[1, 3]] - convert.(eltype(q), [0.1; 0]) # Should always be zero
 end
 
 # Constraint expressing the foot in world coordinates
@@ -158,10 +175,19 @@ h = 0.01
 tf = h*(N - 1)
 
 # TODO Find initial balancing state and control
-x0 = [1; zeros(26)]
-x0[5:7] -= foot_pinned_constraint(x0[1:14], robot) 
+q0 = [1; zeros(13)]
+q0[5:7] = -foot_pinned_constraint(q0, robot)
+set_configuration!(state, q0)
+com0 = normalize(center_of_mass(state).v)
+quat = axis_angle_to_quat(-normalize(skew(z)*com0)*acos(z'*com0))
+q0 = [quat; -foot_pinned_constraint([quat; zeros(10)], robot); zeros(7)]
+x0 = [q0; zeros(nv)]
+
 u0 = zeros(5)
-maximum(abs.(rk4(state, x0, u0, h) - x0)) # Should be 0
+maximum(abs.(rk4(robot, x0, u0, h) - x0)) # Should be 0
+rFunc(u) = rk4(robot, x0, u, h) - x0
+r = rFunc(u0)
+dr_du = FD.jacobian(rFunc, u0)
 
 # TODO Linearization and calculating LQR gain
 
