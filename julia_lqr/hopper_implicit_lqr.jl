@@ -279,11 +279,11 @@ state = MechanismState(robot)
 
 # Problem
 nq, nv, nx, nu = 14, 13, 27, 5
-N = 300
+tf = 1
 h = 0.001
-tf = h*(N - 1)
+N = Int(tf/h + 1)
 
-# TODO Find initial balancing state and control
+# Find initial balancing state and control
 q0 = [1; zeros(13)]
 q0[5:7] = -foot_pinned_c(q0, robot)
 z = [0; 0; 1]
@@ -296,7 +296,7 @@ u0 = [-17.910887726940793; 17.666841134884233; zeros(3)]
 _, λ0 = newton_implicit_midpoint(robot, x0, u0, h)
 maximum(abs.(implicit_midpoint(robot, x0, x0, u0, λ0, h)))
 
-# TODO Linearization and calculating LQR gain
+# Linearization and calculating LQR gain
 A_k = FiniteDiff.finite_difference_jacobian(x_k -> implicit_midpoint(robot, x_k, x0, u0, λ0, h), x0)*E(x0)
 A_next = FiniteDiff.finite_difference_jacobian(x_next -> implicit_midpoint(robot, x0, x_next, u0, λ0, h), x0)*E(x0)
 B_u = FiniteDiff.finite_difference_jacobian(u -> implicit_midpoint(robot, x0, x0, u, λ0, h), u0)
@@ -308,19 +308,25 @@ B_λ = A_next \ B_λ
 
 # Check condition numbers
 cond(A)
+cond(hcat([A^k*[B_u B_λ] for k = 0:26]...)) # Bad (not controllable)
 
 # Constraints
 C = FiniteDiff.finite_difference_jacobian(x_next -> constraints(robot, x_next), x0)*E(x0)
 
-Q = sparse(1.0*I(26))
-R = sparse(1e-2*I(5))
+# Order = [qx, qy, qz, x, y, z, l0, l2, rw, rw, rw, l1, l3]
+pos_cost = [1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 10.0; 10.0; 1.0; 1.0; 1.0; 1.0; 1.0]
+vel_cost = [1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0]
+Q = spdiagm([pos_cost..., vel_cost...])
+R = sparse(100*I(5))
 
-K = constrained_ihlqr(A, B_u, B_λ, C, Q, R, Q, max_iters = 500000)
+K = constrained_ihlqr(A, B_u, B_λ, C, Q, R, Q, max_iters = 100000)
 
 # Simulation
 X = [zeros(nx) for _ = 1:N] 
 U = [zeros(nu) for _ = 1:N - 1]
-X[1] = [1; zeros(13); zeros(13)]
+X[1] = copy(x0)
+θ = 5*pi/180
+X[1][1:4] = L_mult([cos(θ/2); sin(θ/2)*[1; 0; 0]...])*X[1][1:4]
 X[1][5:7] -= foot_pinned_c(X[1][1:14], robot) # Make sure foot constraint is satisfied at start
 for k = 1:N - 1
     Δx = state_error(X[k], x0)
