@@ -111,19 +111,46 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
-src/CMakeFiles/planar_LQR.dir/rule:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/planar_LQR.dir/rule
-.PHONY : src/CMakeFiles/planar_LQR.dir/rule
+src/CMakeFiles/LQR_quat.dir/rule:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/LQR_quat.dir/rule
+.PHONY : src/CMakeFiles/LQR_quat.dir/rule
 
 # Convenience name for target.
-planar_LQR: src/CMakeFiles/planar_LQR.dir/rule
+LQR_quat: src/CMakeFiles/LQR_quat.dir/rule
 
-.PHONY : planar_LQR
+.PHONY : LQR_quat
 
 # fast build rule for target.
-planar_LQR/fast:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/planar_LQR.dir/build.make src/CMakeFiles/planar_LQR.dir/build
-.PHONY : planar_LQR/fast
+LQR_quat/fast:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_quat.dir/build.make src/CMakeFiles/LQR_quat.dir/build
+.PHONY : LQR_quat/fast
+
+LQR_quat.o: LQR_quat.cc.o
+
+.PHONY : LQR_quat.o
+
+# target to build an object file
+LQR_quat.cc.o:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_quat.dir/build.make src/CMakeFiles/LQR_quat.dir/LQR_quat.cc.o
+.PHONY : LQR_quat.cc.o
+
+LQR_quat.i: LQR_quat.cc.i
+
+.PHONY : LQR_quat.i
+
+# target to preprocess a source file
+LQR_quat.cc.i:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_quat.dir/build.make src/CMakeFiles/LQR_quat.dir/LQR_quat.cc.i
+.PHONY : LQR_quat.cc.i
+
+LQR_quat.s: LQR_quat.cc.s
+
+.PHONY : LQR_quat.s
+
+# target to generate assembly for a file
+LQR_quat.cc.s:
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_quat.dir/build.make src/CMakeFiles/LQR_quat.dir/LQR_quat.cc.s
+.PHONY : LQR_quat.cc.s
 
 kalman.o: kalman.cpp.o
 
@@ -131,7 +158,7 @@ kalman.o: kalman.cpp.o
 
 # target to build an object file
 kalman.cpp.o:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/planar_LQR.dir/build.make src/CMakeFiles/planar_LQR.dir/kalman.cpp.o
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_quat.dir/build.make src/CMakeFiles/LQR_quat.dir/kalman.cpp.o
 .PHONY : kalman.cpp.o
 
 kalman.i: kalman.cpp.i
@@ -140,7 +167,7 @@ kalman.i: kalman.cpp.i
 
 # target to preprocess a source file
 kalman.cpp.i:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/planar_LQR.dir/build.make src/CMakeFiles/planar_LQR.dir/kalman.cpp.i
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_quat.dir/build.make src/CMakeFiles/LQR_quat.dir/kalman.cpp.i
 .PHONY : kalman.cpp.i
 
 kalman.s: kalman.cpp.s
@@ -149,35 +176,8 @@ kalman.s: kalman.cpp.s
 
 # target to generate assembly for a file
 kalman.cpp.s:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/planar_LQR.dir/build.make src/CMakeFiles/planar_LQR.dir/kalman.cpp.s
+	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/LQR_quat.dir/build.make src/CMakeFiles/LQR_quat.dir/kalman.cpp.s
 .PHONY : kalman.cpp.s
-
-planar_LQR.o: planar_LQR.cc.o
-
-.PHONY : planar_LQR.o
-
-# target to build an object file
-planar_LQR.cc.o:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/planar_LQR.dir/build.make src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.o
-.PHONY : planar_LQR.cc.o
-
-planar_LQR.i: planar_LQR.cc.i
-
-.PHONY : planar_LQR.i
-
-# target to preprocess a source file
-planar_LQR.cc.i:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/planar_LQR.dir/build.make src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.i
-.PHONY : planar_LQR.cc.i
-
-planar_LQR.s: planar_LQR.cc.s
-
-.PHONY : planar_LQR.s
-
-# target to generate assembly for a file
-planar_LQR.cc.s:
-	cd /home/sofia/mujoco_LQR/build && $(MAKE) -f src/CMakeFiles/planar_LQR.dir/build.make src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.s
-.PHONY : planar_LQR.cc.s
 
 # Help Target
 help:
@@ -187,13 +187,13 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... planar_LQR"
+	@echo "... LQR_quat"
+	@echo "... LQR_quat.o"
+	@echo "... LQR_quat.i"
+	@echo "... LQR_quat.s"
 	@echo "... kalman.o"
 	@echo "... kalman.i"
 	@echo "... kalman.s"
-	@echo "... planar_LQR.o"
-	@echo "... planar_LQR.i"
-	@echo "... planar_LQR.s"
 .PHONY : help
 
 

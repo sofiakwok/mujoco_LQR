@@ -292,6 +292,10 @@ com0 = normalize(center_of_mass(state).v)
 quat = axis_angle_to_quat(-normalize(skew(z)*com0)*acos(z'*com0))
 q0 = [quat; -foot_pinned_c([quat; zeros(10)], robot); zeros(7)]
 x0 = [q0; zeros(nv)]
+for i = 1:27
+    print(x0[i])
+    print(", ")
+end
 u0 = zeros(3)
 _, λ0 = newton_implicit_midpoint(robot, x0, u0, h)
 maximum(abs.(implicit_midpoint(robot, x0, x0, u0, λ0, h)))
@@ -321,6 +325,14 @@ R = sparse(100*I(3))
 
 K = constrained_ihlqr(A, B_u, B_λ, C, Q, R, Q, max_iters = 100000)
 
+for k = 1:3
+    for j = 1:26
+        print(K[k, j])
+        print(", ")
+    end
+    println(" ")
+end
+
 # Simulation
 X = [zeros(nx) for _ = 1:N] 
 U = [zeros(nu) for _ = 1:N - 1]
@@ -328,6 +340,35 @@ X[1] = copy(x0)
 θ = 5*pi/180
 X[1][1:4] = L_mult([cos(θ/2); sin(θ/2)*[1; 0; 0]...])*X[1][1:4]
 X[1][5:7] -= foot_pinned_c(X[1][1:14], robot) # Make sure foot constraint is satisfied at start
+mujoco_start = [
+    0.957826
+    0
+    0
+    0
+    0
+    0
+0.287348
+    0
+    0
+    0
+    0
+    0
+    0
+    0
+0.0045646
+-4.81179e-05
+-0.0910992
+0.0187769
+-0.0364668
+-0.0176894
+0.0187769
+-0.0176894
+-0.00553986
+-0.00461612
+-0.0910843
+-0.0364668
+0.0364728]
+X[1] = copy(mujoco_start)
 for k = 1:N - 1
     Δx = state_error(X[k], x0)
 
@@ -342,6 +383,10 @@ for k = 1:N - 1
         break
     end
 end
-visualize!(mvis, LinRange(0, tf, N), X)
-vis
 
+delta_x = state_error(X, x0)
+U = -K*delta_x
+visualize!(mvis, LinRange(0, tf, N), X)
+set_configuration!(mvis, X[1:14])
+vis
+constraints(robot, X[2])

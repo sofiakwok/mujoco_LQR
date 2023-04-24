@@ -1,0 +1,1 @@
+/usr/bin/c++  -g  -rdynamic CMakeFiles/LQR_quat.dir/kalman.cpp.o CMakeFiles/LQR_quat.dir/LQR_quat.cc.o  -o ../../bin/LQR_quat   -L/home/sofia/mujoco_LQR/lib  -Wl,-rpath,/home/sofia/mujoco_LQR/lib ../../lib/libmujoco.so.2.3.2 /usr/lib/x86_64-linux-gnu/libglfw.so.3.3 

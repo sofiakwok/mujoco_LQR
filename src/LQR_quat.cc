@@ -45,10 +45,9 @@ mjtNum last_update = 0.0;
 mjtNum ctrl;
 
 // time-invariant K
-double K[3] = {0, 0, 0};
-
-//last control output
-double control[2] = {0, 0};
+Matrix<double, 3, 26> K;
+//reference state x0
+Matrix<double, 27, 1> x0;
 
 int counter = 0;
 
@@ -120,82 +119,24 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset)
 
 MatrixXd LQR_controller(const mjModel* m, mjData* d)
 {
-    // update constants
-    double g = 9.81;
-    double mass = 4.74662308;
-    double rw_mass = 0.53255997;
-    double I_p = 2;//0.03463520;
-    double I_rw = 1;//0.00607175;
-    double L = 3;//0.35;
-    double l = 0.75;//0.242;
+    //from hopper_lqr_rw_only.jl
 
-    double a = rw_mass*L*L + I_p; 
-    //cout << "a: " << a << endl;
-    double b = mass*l + rw_mass*L;
+    Matrix<double, 3, 26> K0;
+    K0 << -22.793985345802135, 17.575003406189058, -0.018361663885326045, 856.0918649420217, 847.4563306776349, -18.392043793212252, 0.45624015090188463, -0.5878875588305351, -0.09781386986829045, 2.6291775787154078e-6, -0.00023507800420089612, 0.1967680895180451, 0.3470610889145994, -4.457657291480159, 3.4811960530744805, 0.003908174273440726, 153.0329407274372, 153.0152348408098, -3.289592346096297, 0.08104868095417637, 0.022241280587210994, -0.13626206754646442, 0.00017934949605344556, -0.0002782394021163071, 0.034951941038798305, 0.126464279981237,
+    22.487885168625603, 17.28259665812077, -0.6379866439447641, 856.5460079041366, -847.886619985325, -16.319574389295163, 0.47410708499651194, -0.4426355962460131, 2.0655571032067448e-6, -0.09781357075762927, 0.00030897350099205994, 0.16474914386048395, 0.32936966213236, 4.400546627908781, 3.4265480162746784, -0.12201293161324243, 153.02888638773834, -153.00673616414036, -2.9137520654269795, 0.08425826320377912, 0.04835345991234282, 0.0001790710116561888, -0.1362417989582578, 0.00036509096561455814, 0.02916504762473093, 0.12343545517311245, 
+    0.08930502549463455, 0.013436828271801302, -0.0032929947132841206, -0.36098652174010576, 2.654319848945262, 0.0039113223628028755, 0.022371420477359325, -0.05851616479117369, -0.00021714712267665667, 0.0002851056299710807, 0.09157184252594307, 0.009446341768909461, -0.006714888446476814, -0.010520100276191791, -0.0010242730369673652, -0.0009665849426769278, -0.05316863264985474, 0.39170294162922803, 0.0005966044639223484, 0.00010795168249360339, -0.000409885110159991, -0.0002635457494057913, 0.00034581565255064695, 0.09214090442680467, 5.974648670213104e-5, -8.625054191780815e-5;
 
-    Matrix3d A_cont;
-    A_cont << 0, 1, 0, 
-        b*g/a, 0, 0,
-        -b*g/a, 0, 0;
-    Matrix<double, 3, 1> B_cont = {{0}, {-1/a}, {(a + I_rw)/(a*I_rw)}};
+    cout << K0 << endl;
 
-    // discretize continuous time model
-    MatrixXd A_B(3, 4);
-    A_B << A_cont, B_cont;
-    MatrixXd discretize(4, 4);
-    MatrixXd end_row(1, 4);
-    end_row << 0, 0, 0, 0;
-    discretize << A_B/60, end_row/60;
-    MatrixXd expo;
-    expo = discretize.exp();
-    //cout << "expo: " << expo << endl;
-    //getting 3x3 A matrix
-    MatrixXd A;
-    A = expo.block<3, 3>(0, 0);
-    //cout << "A: " << A << endl;
-    MatrixXd B = expo.block<3, 1>(0, 3);
-    //cout << "B: " << B << endl;
-    Matrix3d A_T = A.transpose();
-    Matrix<double, 1, 3> B_T = B.transpose();
+    return K0;
+}
 
-    Matrix<double, 1, 3> C = {1.0, 0, 0};
-    Matrix<double, 3, 1> C_T = C.transpose();
-    //not used at all
-    Matrix<double, 3, 1> D = {0, 0, 0};
-
-    MatrixXd Q = C_T * C;
-    Q(0, 0) = 10;
-    Q(1, 1) = 1;
-    Q(2, 2) = 0.00001;
-    //cout << "Q: " << Q << endl;
-    //this is sus
-    Matrix<double, 1, 1> R;
-    R(0, 0) = 0.01;
-    Matrix3d P = Q;
-    MatrixXd K;
-    Matrix3d Pn;
-    Matrix3d P2; 
-
-    for (int ricatti = 2; ricatti < 1000; ricatti++){
-        //backwards Ricatti recursion
-        //change arbitary amount of timesteps here at some point
-        for (int i = ricatti; i > 0; i--){
-            K = (R + B_T*P*B).inverse()*B_T*P*A;
-            //cout << "K: " <<K << endl;
-            Pn = Q + A_T*P*(A - B*K);
-            //cout << "Pn: " << Pn << endl;
-            P2 = P;
-            P = Pn;
-        }
-
-        if ((P - P2).norm() <= 1e-10){
-            cout << "iters: " << ricatti << endl;
-            cout << "K: " << K << endl;
-            return K; 
-        }
-    }
-    cout << "Did not converge" << endl;
-    return K;
+MatrixXd ref_pos()
+{
+    Matrix<double, 27, 1> x0;
+    //x0 << 0.999948475958916, 0.0006138456069342759, -0.010132552541783801, -0.0, 0.00017582778541125332, -0.0003617632294766306, 0.2946863026769917, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+    x0 << 1, 0, 0, 0, 0, 0, 0.3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    return x0;
 }
 
 //*************************************
@@ -207,6 +148,72 @@ void set_position_servo(const mjModel* m, int actuator_no, double kp)
 }
 //***********************************
 
+MatrixXd skew(VectorXd q)
+{
+    Matrix3d skew;
+    double v1 = q(0);
+    double v2 = q(1);
+    double v3 = q(2);
+    skew << 0, -v3, v2, v3, 0, -v1, -v2, v1, 0;
+    return skew;
+}
+
+MatrixXd L_mult(VectorXd q)
+{
+    double qs = q(0);
+    VectorXd qv(3);
+    qv << q(1), q(2), q(3);
+    MatrixXd subset(3, 3);
+    subset = qs*MatrixXd::Identity(3, 3) + skew(qv);
+    MatrixXd stack(4, 4);
+    stack.row(0) << q(0), q(1), q(2), q(3);
+    stack.col(0).tail(3) << qv(0), qv(1), qv(2);
+    stack.block(1, 1, 3, 3) = subset;
+    return stack;
+}
+
+VectorXd quat_to_axis_angle(VectorXd q)
+{    
+    double tol = 1e-12;
+    double qs = q(0);
+    VectorXd qv(3);
+    qv << q(1), q(2), q(3);
+    double norm_qv = qv.norm();
+    
+    if (norm_qv >= tol){
+        double theta = 2*atan(norm_qv/qs);
+        return theta*qv/norm_qv;
+    }
+    else {
+        return VectorXd::Zero(3, 1);
+    }
+}
+
+MatrixXd state_error(VectorXd x, VectorXd x0)
+{
+    Matrix<double, 26, 1> err;
+    VectorXd x0_q(4);
+    x0_q << x0(0), x0(1), x0(2), x0(3);
+    VectorXd x_q(4);
+    x_q << x(0), x(1), x(2), x(3);
+    VectorXd quat_diff = L_mult(x0_q).transpose()*x_q;
+
+    VectorXd x0_pos(23);
+    VectorXd x_pos(23);
+
+    x0_pos << x0(4), x0(5), x0(6), x0(7), x0(8), x0(9), x0(10), x0(11), x0(12), x0(13), x0(14), x0(15), x0(16), x0(17), x0(18), x0(19), x0(20), x0(21), x0(22), x0(23), x0(24), x0(25), x0(26);
+    x_pos << x(4), x(5), x(6), x(7), x(8), x(9), x(10), x(11), x(12), x(13), x(14) , x(15), x(16), x(17), x(18), x(19), x(20), x(21), x(22), x(23), x(24), x(25), x(26);
+
+    VectorXd pos_diff(23);
+    pos_diff << x_pos - x0_pos;
+    VectorXd axis_diff(3);
+    axis_diff << quat_to_axis_angle(quat_diff);
+    err << axis_diff, pos_diff;
+
+    return err;
+}
+
+
 void mycontroller(const mjModel* m, mjData* d)
 {
     //running controller at 200 Hz
@@ -214,102 +221,87 @@ void mycontroller(const mjModel* m, mjData* d)
         int actuator_no;
         int bodyid;
 
-        //getting current COM position and velocity
-        //COM position is not right, need to add a body at COM
-        bodyid = mj_name2id(m, mjOBJ_SITE, "imu");
+        VectorXd x(27);
+        //getting q
+        bodyid = mj_name2id(m, mjOBJ_JOINT, "base joint");
         //gives current body frame orientation as a quaternion in Cartesian coordinates
         mjtNum com_mat[9];
-        mjtNum com_pos[4];
-        mju_copy(com_mat, d->site_xmat, 9);
-        mju_mat2Quat(com_pos, com_mat);
-        cout << "com quat: " << com_pos[0] << " " << com_pos[1] << " " << com_pos[2] << " " << com_pos[3] << endl;
-        //adding noise to current quaternion orientation (modeling IMU noise)
-        
-        double noise;
-        /*srand(d->time);
-        noise = (rand() % 9)/1000;
-        com_pos[0] += noise;    
-        noise = (rand() % 9)/1000;
-        com_pos[1] += noise;
-        noise = (rand() % 9)/1000;
-        com_pos[2] += noise;
-        noise = (rand() % 9)/1000;
-        com_pos[3] += noise;
-        */
-        //multiplying starting position difference between ref position and current quaternion to find current COM
-        mjtNum ref_com[3];
-        ref_com[0] = 0;
-        ref_com[1] = 0;
-        ref_com[2] = 0.3;
-        mjtNum delta_x[3];
-        mju_rotVecQuat(delta_x, ref_com, com_pos);
-        cout << "com est pos: " << delta_x[0] << " " << delta_x[1] << " " << delta_x[2] << endl;
+        mjtNum com_quat[4];
+        mjtNum com_pos[3];
+        mju_copy(com_quat, d->qpos + m->jnt_qposadr[bodyid] + 3, 4);
+        mju_copy(com_pos, d->qpos + m->jnt_qposadr[bodyid], 3);
 
-        mjtNum com_realpos[3];
-        mju_copy(com_realpos, d->site_xpos, 3);
-        cout << "com real pos: " << com_realpos[0] <<  " " << com_realpos[1] << " " << com_realpos[2] << endl;
+        int link0 = mj_name2id(m, mjOBJ_JOINT, "Joint 0");
+        mjtNum link_0;
+        link_0 = d->qpos[m->jnt_qposadr[link0]];
+        int link2 = mj_name2id(m, mjOBJ_JOINT, "Joint 2");
+        mjtNum link_2;
+        link_2 = d->qpos[m->jnt_qposadr[link2]];
+        int rw0 = mj_name2id(m, mjOBJ_JOINT, "joint_rw0");
+        mjtNum rwx;
+        rwx = d->qpos[m->jnt_qposadr[rw0]];
+        int rw1 = mj_name2id(m, mjOBJ_JOINT, "joint_rw1");
+        mjtNum rwy;
+        rwy = d->qpos[m->jnt_qposadr[rw1]];
+        int rw2 = mj_name2id(m, mjOBJ_JOINT, "joint_rwz");
+        mjtNum rwz;
+        rwz = d->qpos[m->jnt_qposadr[rw2]];
+        int link1 = mj_name2id(m, mjOBJ_JOINT, "Joint 1");
+        mjtNum link_1;
+        link_1 = d->qpos[m->jnt_qposadr[link1]];
+        int link3 = mj_name2id(m, mjOBJ_JOINT, "Joint 3");
+        mjtNum link_3;
+        link_3 = d->qpos[m->jnt_qposadr[link3]];
 
-        //finding angle from z axis for x and y
-        mjtNum angles[3];
-        angles[0] = atan(delta_x[0]/delta_x[2]);
-        angles[1] = atan(delta_x[1]/delta_x[2]);
-        angles[2] = 0;
-        cout << "angles: " << angles[0] << " " << angles[1] << endl;
-        //transforming into reaction wheel frame from x and y world frame axes
-        mjtNum reaction_angles[3];
-        mjtNum rotation_matrix[9];
-        mju_zero(rotation_matrix, 9);
-        mjtNum theta_rot = acos(com_pos[0])*2;
-        rotation_matrix[0] = cos(theta_rot - M_PI/4);
-        rotation_matrix[1] = -sin(theta_rot - M_PI/4);
-        rotation_matrix[3] = sin(theta_rot - M_PI/4);
-        rotation_matrix[4] = cos(theta_rot - M_PI/4);
-        mju_rotVecMat(reaction_angles, angles, rotation_matrix);
         //COM velocity data - gives rotational velocity followed by translational velocity (6x1)
-        mjtNum com_vel[3];
+        mjtNum com_vel[6];
         mjtNum vel_angles[3];
-        bodyid = mj_name2id(m, mjOBJ_BODY, "base_link");
-        mju_copy(com_vel, d->qvel + bodyid, 3);
-        mju_rotVecMat(vel_angles, com_vel, rotation_matrix);
+        bodyid = mj_name2id(m, mjOBJ_JOINT, "base joint");
+        mju_copy(com_vel, d->qvel + m->jnt_dofadr[bodyid], 6);
+        //cout << com_vel[0] << " " << com_vel[1] << " " << com_vel[2] << " " << com_vel[3] << " " << com_vel[4] << " " << com_vel[5] << endl;
+        mjtNum link_0_vel;
+        mjtNum link_2_vel;
+        mjtNum rwx_vel;
+        mjtNum rwy_vel;
+        mjtNum rwz_vel;
+        mjtNum link_1_vel;
+        mjtNum link_3_vel;
+        link_0_vel = d->qvel[m->jnt_dofadr[link0]];
+        link_2_vel = d->qvel[m->jnt_dofadr[link2]];
+        rwx_vel = d->qvel[m->jnt_dofadr[rw0]];
+        rwy_vel = d->qvel[m->jnt_dofadr[rw1]];
+        rwz_vel = d->qvel[m->jnt_dofadr[rw2]];
+        link_1_vel = d->qvel[m->jnt_dofadr[link1]];
+        link_3_vel = d->qvel[m->jnt_dofadr[link3]];
+
+        x << com_quat[0], com_quat[1], com_quat[2], com_quat[3], com_pos[0], com_pos[1], com_pos[2], link_0, link_2, rwx, rwy, rwz, link_1, link_3, 
+        com_vel[0], com_vel[1], com_vel[2], com_vel[3], com_vel[4], com_vel[5], link_0_vel, link_2_vel, rwx_vel, rwy_vel, rwz_vel, link_1_vel, link_3_vel;
+
+        Matrix<double, 26, 1> delta_x;
+        delta_x = state_error(x, x0);
+
+        //cout << "x: " << x.transpose() << endl;
+        if (counter == 0){
+            cout << "x: " <<  x << endl;
+        }
+
+        Matrix<double, 3, 1> ctrl;
+        ctrl = -K * delta_x;
+        //cout << "ctrl: " << ctrl << endl;
 
         //reaction wheel 1 (x)
         int actuator_x = mj_name2id(m, mjOBJ_ACTUATOR, "rw0");
-        int body_rw0 = mj_name2id(m, mjOBJ_BODY, "rw0");
-        mjtNum state[3];
-        mjtNum xvel = d->actuator_velocity[actuator_x];
-        cout << "x angle: " << reaction_angles[0] << endl;
-        cout << "x speed: " << vel_angles[0] << endl;
-        cout << "rw speed (x): " << xvel << endl;
-        state[0] = reaction_angles[0];
-        state[1] = vel_angles[0];
-        state[2] = xvel;
-        mjtNum ctrl_x = mju_dot3(K, state);
-        noise = 0;//(rand() % 9)/1000;
-        cout << "control (x): " << -ctrl_x << endl;
-        d->ctrl[actuator_x] = -ctrl_x;
+        mjtNum ctrl_x = ctrl[0];
+        d->ctrl[actuator_x] = ctrl_x;
 
         //reaction wheel 2 (y)
         int actuator_y = mj_name2id(m, mjOBJ_ACTUATOR, "rw1");
-        int body_rw1 = mj_name2id(m, mjOBJ_BODY, "rw1");
-        int yveladr = -1;
-        mjtNum yvel = d->actuator_velocity[actuator_y];
-        cout << "y angle: " << reaction_angles[1] << endl;
-        cout << "y speed: " << vel_angles[1] << endl;
-        cout << "rw speed (y): " << yvel << endl;
-        state[0] = reaction_angles[1];
-        state[1] = vel_angles[1];
-        state[2] = yvel;
-        mjtNum ctrl_y = mju_dot3(K, state);
-        noise = 0;//(rand() % 9)/1000;
-        cout << "control (y): " << -ctrl_y << endl;
-        d->ctrl[actuator_y] = -ctrl_y;
+        mjtNum ctrl_y = ctrl[1];
+        d->ctrl[actuator_y] = ctrl_y;
 
-        cout << K[0] << " " << K[1] << " " << K[2] << endl;
-
-        //mjtNum ctrl = abs(ctrl_x - ctrl_y);
-
-        //d->ctrl[actuator_x] = -ctrl_x + 0.5*(-1 + 2*signbit(ctrl_x))*-ctrl; //-ctrl + noise;
-        //d->ctrl[actuator_y] = -ctrl_y + 0.5*(-1 + 2*signbit(ctrl_x))*-ctrl; //-ctrl + noise;
+        int actuator_z = mj_name2id(m, mjOBJ_ACTUATOR, "rwz");
+        mjtNum ctrl_z = ctrl[2];
+        d->ctrl[actuator_z] = ctrl_z;
     }
 
     //fix leg angles 
@@ -388,13 +380,10 @@ int main(int argc, const char** argv)
     cam.lookat[1] = arr_view[4];
     cam.lookat[2] = arr_view[5];
 
-    //d->qpos[0]=1.57; //pi/2
     //getting K matrix for LQR controls
-    MatrixXd controls;
-    controls = LQR_controller(m, d);
+    K = LQR_controller(m, d);
+    x0 = ref_pos();
 
-    //converting K matrix to K double
-    Map<MatrixXd>(K, controls.rows(), controls.cols()) = controls;
     mjcb_control = mycontroller;
 
     // use the first while condition if you want to simulate for a period.

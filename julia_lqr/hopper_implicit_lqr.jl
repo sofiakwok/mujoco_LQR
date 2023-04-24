@@ -314,8 +314,8 @@ cond(hcat([A^k*[B_u B_λ] for k = 0:26]...)) # Bad (not controllable)
 C = FiniteDiff.finite_difference_jacobian(x_next -> constraints(robot, x_next), x0)*E(x0)
 
 # Order = [qx, qy, qz, x, y, z, l0, l2, rw, rw, rw, l1, l3]
-pos_cost = [1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 10.0; 10.0; 1.0; 1.0; 1.0; 1.0; 1.0]
-vel_cost = [1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0]
+pos_cost = [1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 10.0; 10.0; 0.0; 0.0; 0.0; 1.0; 1.0]
+vel_cost = 0.1*[1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0]
 Q = spdiagm([pos_cost..., vel_cost...])
 R = sparse(100*I(5))
 
@@ -328,6 +328,34 @@ X[1] = copy(x0)
 θ = 5*pi/180
 X[1][1:4] = L_mult([cos(θ/2); sin(θ/2)*[1; 0; 0]...])*X[1][1:4]
 X[1][5:7] -= foot_pinned_c(X[1][1:14], robot) # Make sure foot constraint is satisfied at start
+mujoco_start = [0.957826
+0
+0
+0
+0
+0
+0.287348
+0
+0
+0
+0
+0
+0
+0
+0.0045646
+-4.81179e-05
+-0.0910992
+0.0187769
+-0.0364668
+-0.0176894
+0.0187769
+-0.0176894
+-0.00553986
+-0.00461612
+-0.0910843
+-0.0364668
+0.0364728]
+X[1] = copy(mujoco_start)
 for k = 1:N - 1
     Δx = state_error(X[k], x0)
 
