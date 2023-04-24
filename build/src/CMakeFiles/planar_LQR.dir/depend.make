@@ -220,7 +220,6 @@ src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.o: ../include/mujoco/mjtnum.h
 src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.o: ../include/mujoco/mjui.h
 src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.o: ../include/mujoco/mjvisualize.h
 src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.o: ../include/mujoco/mujoco.h
-src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.o: ../include/mujoco/spline.h
 src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.o: ../src/kalman.hpp
 src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.o: ../src/planar_LQR.cc
 src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.o: /usr/include/eigen3/Eigen/Cholesky

@@ -52,9 +52,9 @@
 			[
 				{
 					"directoryIndex" : 1,
-					"id" : "LQR_hopper::@145eef247bfb46b6828c",
-					"jsonFile" : "target-LQR_hopper-Debug-ebad922bac1c7cca8b02.json",
-					"name" : "LQR_hopper",
+					"id" : "planar_LQR::@145eef247bfb46b6828c",
+					"jsonFile" : "target-planar_LQR-Debug-423cf63e4aba4472c464.json",
+					"name" : "planar_LQR",
 					"projectIndex" : 0
 				}
 			]

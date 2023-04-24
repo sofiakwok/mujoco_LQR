@@ -1,12 +1,12 @@
 [
 {
   "directory": "/home/sofia/mujoco_LQR/build/src",
-  "command": "/usr/bin/c++   -I/home/sofia/mujoco_LQR/include -I/home/sofia/mujoco_LQR/src -isystem /usr/include/eigen3  -g   -o CMakeFiles/LQR_hopper.dir/kalman.cpp.o -c /home/sofia/mujoco_LQR/src/kalman.cpp",
+  "command": "/usr/bin/c++   -I/home/sofia/mujoco_LQR/include -I/home/sofia/mujoco_LQR/src -isystem /usr/include/eigen3  -g   -o CMakeFiles/planar_LQR.dir/kalman.cpp.o -c /home/sofia/mujoco_LQR/src/kalman.cpp",
   "file": "/home/sofia/mujoco_LQR/src/kalman.cpp"
 },
 {
   "directory": "/home/sofia/mujoco_LQR/build/src",
-  "command": "/usr/bin/c++   -I/home/sofia/mujoco_LQR/include -I/home/sofia/mujoco_LQR/src -isystem /usr/include/eigen3  -g   -o CMakeFiles/LQR_hopper.dir/LQR_hopper.cc.o -c /home/sofia/mujoco_LQR/src/LQR_hopper.cc",
-  "file": "/home/sofia/mujoco_LQR/src/LQR_hopper.cc"
+  "command": "/usr/bin/c++   -I/home/sofia/mujoco_LQR/include -I/home/sofia/mujoco_LQR/src -isystem /usr/include/eigen3  -g   -o CMakeFiles/planar_LQR.dir/planar_LQR.cc.o -c /home/sofia/mujoco_LQR/src/planar_LQR.cc",
+  "file": "/home/sofia/mujoco_LQR/src/planar_LQR.cc"
 }
 ]

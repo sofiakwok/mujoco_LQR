@@ -121,10 +121,10 @@ end
 E(x) = BlockDiagonal([0.5*G(x[1:4]), quat_to_rot(x[1:4]), convert.(eltype(x), I(length(x) - 7))])
 
 # Error state jacobian transpose
-E_T(x) = BlockDiagonal([2*G(x[1:4])', quat_to_rot(x[1:4])', 1.0*I(length(x) - 7)])
+E_T(x) = BlockDiagonal([0.5*G(x[1:4])', quat_to_rot(x[1:4])', 1.0*I(length(x) - 7)])
 
 # Dynamics with constraints
-function dynamics(robot, x, u; k_p = 0, k_d = 0)
+function dynamics(robot, x, u, k_p, k_d)
     T = promote_type(eltype(x), eltype(u))
     state = MechanismState{T}(robot)
     # Get config and velocity
@@ -223,11 +223,11 @@ function c_viol(q, robot)
 end
 
 # rk4 on dynamics (naive way, need to normalize quaternion)
-function rk4(model, x_k, u, h; k_p = 0, k_d = 0)
-    k1 = h*dynamics(model, x_k, u, k_p=k_p, k_d=k_d)
-    k2 = h*dynamics(model, x_k + k1/2, u, k_p=k_p, k_d=k_d)
-    k3 = h*dynamics(model, x_k + k2/2, u, k_p=k_p, k_d=k_d)
-    k4 = h*dynamics(model, x_k + k3, u, k_p=k_p, k_d=k_d)
+function rk4(model, x_k, u, h, k_p, k_d)
+    k1 = h*dynamics(model, x_k, u, k_p, k_d)
+    k2 = h*dynamics(model, x_k + k1/2, u, k_p, k_d)
+    k3 = h*dynamics(model, x_k + k2/2, u, k_p, k_d)
+    k4 = h*dynamics(model, x_k + k3, u, k_p, k_d)
     x_next = x_k + (k1 + 2*k2 + 2*k3 + k4)/6;
     x_next[1:4] = normalize(x_next[1:4])
     return x_next
@@ -259,29 +259,29 @@ quat = axis_angle_to_quat(-normalize(skew(z)*com0)*acos(z'*com0))
 q0 = [quat; -foot_pinned_c([quat; zeros(10)], robot); zeros(7)]
 x0 = [q0; zeros(nv)]
 u0 = [-17.910887726940793; 17.666841134884233; zeros(3)]
-maximum(abs.(rk4(robot, x0, u0, h) - x0))
+maximum(abs.(rk4(robot, x0, u0, h, -10000, 100) - x0))
 
 # TODO Linearization and calculating LQR gain
-A = E_T(x0)*FiniteDiff.finite_difference_jacobian(x -> rk4(robot, x, u0, h), x0)*E(x0)
-B = E_T(x0)*FiniteDiff.finite_difference_jacobian(u -> rk4(robot, x0, u, h), u0)
+A = E_T(x0)*FiniteDiff.finite_difference_jacobian(x -> rk4(robot, x, u0, h, 0, 0), x0)*E(x0)
+B = E_T(x0)*FiniteDiff.finite_difference_jacobian(u -> rk4(robot, x0, u, h, 0, 0), u0)
 
 Q = sparse(1.0*I(26))
 R = sparse(1.0*I(5))
 
-K = ihlqr(A, B, Q, R, Q, max_iters = 10000)
+K = ihlqr(A, B, Q, R, Q, max_iters = 1000)
 
 # Simulation
 X = [zeros(nx) for _ = 1:N] 
 U = [zeros(nu) for _ = 1:N - 1]
 X[1] = [1; zeros(13); zeros(13)]
 X[1][5:7] -= foot_pinned_c(X[1][1:14], robot) # Make sure foot constraint is satisfied at start
-for k = 1:N - 1
+for k = 1:(N-1)
     # TODO control on error state
     Δx = state_error(X[k], x0)
 
     U[k] = u0 - K*Δx
 
-    X[k + 1] = rk4(robot, X[k], U[k], h, k_p = -10000, k_d = 100)
+    X[k + 1] = rk4(robot, X[k], U[k], h, -10000, 100)
 
     # Check constraint violation
     if c_viol(X[k + 1][1:14], robot) > 1e-2

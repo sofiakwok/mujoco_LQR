@@ -68,22 +68,6 @@ mujoco/mjui.h
 mujoco/mjvisualize.h
 -
 
-/home/sofia/mujoco_LQR/include/mujoco/spline.h
-cstdio
--
-cassert
--
-cmath
--
-vector
--
-algorithm
--
-sstream
--
-string
--
-
 /home/sofia/mujoco_LQR/src/kalman.hpp
 Eigen/Dense
 -
@@ -123,8 +107,6 @@ chrono
 -
 vector
 -
-../include/mujoco/spline.h
-/home/sofia/mujoco_LQR/include/mujoco/spline.h
 kalman.hpp
 /home/sofia/mujoco_LQR/src/kalman.hpp
 

@@ -71,7 +71,7 @@ clean: src/clean
 # Directory level rules for directory src
 
 # Recursive "all" directory target.
-src/all: src/CMakeFiles/LQR_hopper.dir/all
+src/all: src/CMakeFiles/planar_LQR.dir/all
 
 .PHONY : src/all
 
@@ -81,36 +81,36 @@ src/preinstall:
 .PHONY : src/preinstall
 
 # Recursive "clean" directory target.
-src/clean: src/CMakeFiles/LQR_hopper.dir/clean
+src/clean: src/CMakeFiles/planar_LQR.dir/clean
 
 .PHONY : src/clean
 
 #=============================================================================
-# Target rules for target src/CMakeFiles/LQR_hopper.dir
+# Target rules for target src/CMakeFiles/planar_LQR.dir
 
 # All Build rule for target.
-src/CMakeFiles/LQR_hopper.dir/all:
-	$(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/depend
-	$(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/sofia/mujoco_LQR/build/CMakeFiles --progress-num=1,2,3 "Built target LQR_hopper"
-.PHONY : src/CMakeFiles/LQR_hopper.dir/all
+src/CMakeFiles/planar_LQR.dir/all:
+	$(MAKE) -f src/CMakeFiles/planar_LQR.dir/build.make src/CMakeFiles/planar_LQR.dir/depend
+	$(MAKE) -f src/CMakeFiles/planar_LQR.dir/build.make src/CMakeFiles/planar_LQR.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/sofia/mujoco_LQR/build/CMakeFiles --progress-num=1,2,3 "Built target planar_LQR"
+.PHONY : src/CMakeFiles/planar_LQR.dir/all
 
 # Build rule for subdir invocation for target.
-src/CMakeFiles/LQR_hopper.dir/rule: cmake_check_build_system
+src/CMakeFiles/planar_LQR.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/sofia/mujoco_LQR/build/CMakeFiles 3
-	$(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/LQR_hopper.dir/all
+	$(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/planar_LQR.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/sofia/mujoco_LQR/build/CMakeFiles 0
-.PHONY : src/CMakeFiles/LQR_hopper.dir/rule
+.PHONY : src/CMakeFiles/planar_LQR.dir/rule
 
 # Convenience name for target.
-LQR_hopper: src/CMakeFiles/LQR_hopper.dir/rule
+planar_LQR: src/CMakeFiles/planar_LQR.dir/rule
 
-.PHONY : LQR_hopper
+.PHONY : planar_LQR
 
 # clean rule for target.
-src/CMakeFiles/LQR_hopper.dir/clean:
-	$(MAKE) -f src/CMakeFiles/LQR_hopper.dir/build.make src/CMakeFiles/LQR_hopper.dir/clean
-.PHONY : src/CMakeFiles/LQR_hopper.dir/clean
+src/CMakeFiles/planar_LQR.dir/clean:
+	$(MAKE) -f src/CMakeFiles/planar_LQR.dir/build.make src/CMakeFiles/planar_LQR.dir/clean
+.PHONY : src/CMakeFiles/planar_LQR.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

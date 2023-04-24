@@ -16,7 +16,6 @@
 #include <unsupported/Eigen/MatrixFunctions>
 #include <chrono>
 #include <vector>
-#include "../include/mujoco/spline.h"
 
 #include "kalman.hpp"
 

@@ -221,7 +221,6 @@ src/CMakeFiles/planar_LQR.dir/planar_LQR.cc.o
  ../include/mujoco/mjui.h
  ../include/mujoco/mjvisualize.h
  ../include/mujoco/mujoco.h
- /home/sofia/mujoco_LQR/include/mujoco/spline.h
  /home/sofia/mujoco_LQR/src/kalman.hpp
  /home/sofia/mujoco_LQR/src/planar_LQR.cc
  /usr/include/eigen3/Eigen/Cholesky
