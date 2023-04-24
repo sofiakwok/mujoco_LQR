@@ -181,15 +181,14 @@ function dynamics(robot, x, u, λ)
     # Dynamics (get M, C, and B)
     M = mass_matrix(state)
     C = Vector(dynamics_bias(state))
-    B = zeros(13, 5)
-    B[7, 1] = 1; # Link 0 
-    B[8, 2] = 1; # Link 2
-    B[9:11, 3:5] = I(3); # Reaction wheels
+    B = zeros(13, 3)
+    B[9:11, :] = I(3); # Reaction wheels
 
     # Constraint function on foot
-    J1 = foot_pinned_J(q, robot)               # Jacobian of foot pinned constraint
-    J2 = closed_loop_J(q, robot)               # Jacobian of closed loop constraint
-    J = [J1; J2]
+    J1 = foot_pinned_J(q, robot)                   # Jacobian of foot pinned constraint
+    J2 = closed_loop_J(q, robot)                   # Jacobian of closed loop constraint
+    J3 = zeros(2, 13); J3[1, 7] = 1; J3[2, 8] = 1  # Jacobian of linkage constraint
+    J = [J1; J2; J3]
 
     # Solve the following system:
     # Mv̇ + C = Bu + J'λ             # Dynamics with constraint forces λ
@@ -201,8 +200,9 @@ end
 function constraints(robot, x)
     q = x[1:14]
     return [
-        closed_loop_c(q, robot);
-        foot_pinned_c(q, robot)
+        closed_loop_c(q, robot); # Constraint on linkage
+        foot_pinned_c(q, robot); # Fix foot
+        q[8:9]                   # Don't let linkage move
     ]
 end
 
@@ -223,11 +223,11 @@ function pinned_implicit_midpoint(robot, x_k, x_next, u, λ, h)
 end
 
 function newton_implicit_midpoint(robot, x_k, u, h; max_iters = 10, tol = 1e-14)
-    nx, nλ = length(x_k), 5
+    nx, nλ = length(x_k), 7
 
     # Init guess
     x_guess = copy(x_k)
-    λ_guess = zeros(5)
+    λ_guess = zeros(7)
     y_guess = [x_guess; λ_guess] # Solve for x and λ together
 
     # Form residual function
@@ -278,7 +278,7 @@ mvis = MechanismVisualizer(robot, URDFVisuals(urdf, package_path = [meshes]), vi
 state = MechanismState(robot)
 
 # Problem
-nq, nv, nx, nu = 14, 13, 27, 5
+nq, nv, nx, nu = 14, 13, 27, 3
 tf = 5
 h = 0.001
 N = Int(tf/h + 1)
@@ -292,7 +292,7 @@ com0 = normalize(center_of_mass(state).v)
 quat = axis_angle_to_quat(-normalize(skew(z)*com0)*acos(z'*com0))
 q0 = [quat; -foot_pinned_c([quat; zeros(10)], robot); zeros(7)]
 x0 = [q0; zeros(nv)]
-u0 = [-17.910887726940793; 17.666841134884233; zeros(3)]
+u0 = zeros(3)
 _, λ0 = newton_implicit_midpoint(robot, x0, u0, h)
 maximum(abs.(implicit_midpoint(robot, x0, x0, u0, λ0, h)))
 
@@ -317,7 +317,7 @@ C = FiniteDiff.finite_difference_jacobian(x_next -> constraints(robot, x_next), 
 pos_cost = [1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 10.0; 10.0; 1.0; 1.0; 1.0; 1.0; 1.0]
 vel_cost = [1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0]
 Q = spdiagm([pos_cost..., vel_cost...])
-R = sparse(100*I(5))
+R = sparse(100*I(3))
 
 K = constrained_ihlqr(A, B_u, B_λ, C, Q, R, Q, max_iters = 100000)
 
@@ -331,7 +331,7 @@ X[1][5:7] -= foot_pinned_c(X[1][1:14], robot) # Make sure foot constraint is sat
 for k = 1:N - 1
     Δx = state_error(X[k], x0)
 
-    U[k] = u0 - K[1:5, :]*Δx
+    U[k] = u0 - K*Δx
 
     X[k + 1], _ = newton_implicit_midpoint(robot, X[k], U[k], h)
 
