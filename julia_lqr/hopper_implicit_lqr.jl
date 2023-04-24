@@ -336,8 +336,8 @@ for k = 1:N - 1
     X[k + 1], _ = newton_implicit_midpoint(robot, X[k], U[k], h)
 
     # Check constraint violation
-    if maximum(abs.(constraints(X[k + 1][1:14], robot))) > 1e-2
-        @error "Constraints violated, stopping sim" k constraints(X[k + 1][1:14], robot)
+    if maximum(abs.(constraints(robot, X[k + 1]))) > 1e-2
+        @error "Constraints violated, stopping sim" k constraints(robot, X[k + 1])
         [X[i] = copy(X[k + 1]) for i = k+2:N]
         break
     end
