@@ -218,7 +218,7 @@ end
 function pinned_implicit_midpoint(robot, x_k, x_next, u, λ, h)
     return [
         implicit_midpoint(robot, x_k, x_next, u, λ, h);
-        constraints(robot, x_next)
+        constraints(robot, (x_next + x_k)/2)
     ]
 end
 
@@ -279,7 +279,7 @@ state = MechanismState(robot)
 
 # Problem
 nq, nv, nx, nu = 14, 13, 27, 5
-tf = 1
+tf = 5
 h = 0.001
 N = Int(tf/h + 1)
 
