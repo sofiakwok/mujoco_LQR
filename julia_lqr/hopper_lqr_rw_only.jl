@@ -321,7 +321,7 @@ C = FiniteDiff.finite_difference_jacobian(x_next -> constraints(robot, x_next), 
 pos_cost = [1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 10.0; 10.0; 0.0; 0.0; 0.0; 1.0; 1.0]
 vel_cost = 0.1*[1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0]
 Q = spdiagm([pos_cost..., vel_cost...])
-R = sparse(100*I(3))
+R = sparse(1000*I(3))
 
 K = constrained_ihlqr(A, B_u, B_λ, C, Q, R, Q, max_iters = 100000)
 
@@ -340,6 +340,34 @@ X[1] = copy(x0)
 θ = 10*pi/180
 X[1][1:4] = L_mult([cos(θ/2); sin(θ/2)*[1; 0; 0]...])*X[1][1:4]
 X[1][5:7] -= foot_pinned_c(X[1][1:14], robot) # Make sure foot constraint is satisfied at start
+
+X[1] = [0.957826
+-0
+ 0
+ 0
+ 0
+ 0
+0.287348
+-0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0]
 
 for k = 1:N - 1
     Δx = state_error(X[k], x0)
