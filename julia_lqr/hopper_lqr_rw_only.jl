@@ -318,8 +318,8 @@ cond(hcat([A^k*[B_u B_λ] for k = 0:26]...)) # Bad (not controllable)
 C = FiniteDiff.finite_difference_jacobian(x_next -> constraints(robot, x_next), x0)*E(x0)
 
 # Order = [qx, qy, qz, x, y, z, l0, l2, rw, rw, rw, l1, l3]
-pos_cost = [1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 10.0; 10.0; 1.0; 1.0; 1.0; 1.0; 1.0]
-vel_cost = [1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0]
+pos_cost = [1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 10.0; 10.0; 0.0; 0.0; 0.0; 1.0; 1.0]
+vel_cost = 0.1*[1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0]
 Q = spdiagm([pos_cost..., vel_cost...])
 R = sparse(100*I(3))
 
