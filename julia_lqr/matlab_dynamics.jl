@@ -11,42 +11,10 @@ using Statistics
 using BenchmarkTools
 using SparseArrays
 
-function dynamics(params::NamedTuple, x::Vector, u)
-    # cartpole ODE, parametrized by params. 
-
-    # cartpole physical parameters 
-    mc, mp, l = params.mc, params.mp, params.l
-    g = 9.81
-    
-    q = x[1:2]
-    qd = x[3:4]
-
-    s = sin(q[2])
-    c = cos(q[2])
-
-    H = [mc+mp mp*l*c; mp*l*c mp*l^2]
-    C = [0 -mp*qd[2]*l*s; 0 0]
-    G = [0, mp*g*l*s]
-    B = [1, 0]
-
-    qdd = -H\(C*qd + G - B*u[1])
-    return [qd;qdd]
-
-end
-
-function rk4(x::Vector,u,dt::Float64,params::NamedTuple, )
-    # vanilla RK4
-    k1 = dt*model_dynamics(x, u, params)
-    k2 = dt*model_dynamics(x + k1/2, u, params)
-    k3 = dt*model_dynamics(x + k2/2, u, params)
-    k4 = dt*model_dynamics(x + k3, u, params)
-    x + (1/6)*(k1 + 2*k2 + 2*k3 + k4)
-end
-    
-
-function mass_matrix(I11_1,I11_2,I11_3,I12_1,I12_2,I12_3,I13_1,I13_2,I13_3,
-        Iwm1,Iwm2,Iwm3,Iwp1,Iwp2,Iwp3,theta1,theta2)
-    
+function mass_mat(I1,Iwm,Iwp,theta1,theta2)
+    I11_1,I11_2,I11_3,I12_1,I12_2,I12_3,I13_1,I13_2,I13_3 = [I1[i] for i=1:9]
+    Iwm1,Iwm2,Iwm3 = [Iwm[i] for i=1:3]
+    Iwp1,Iwp2,Iwp3 = [Iwp[i] for i=1:3]
     t2 = cos(theta1)
     t3 = sin(theta1)
     t4 = I11_2*t2*(1.0/2.0)
@@ -61,16 +29,19 @@ function mass_matrix(I11_1,I11_2,I11_3,I12_1,I12_2,I12_3,I13_1,I13_2,I13_3,
     t12 = t2-t11
     t14 = t3+t13
     t15 = t10^2
-    M = np.array([I12_2, t6, 0.0, 0.0, t6, t2*(I11_1*t2-I13_1*t3)-t3*(I11_3*t2-I13_3*t3),
-        0.0,0.0,0.0,0.0,Iwp2*t15*(1.0/2.0)+Iwp1*t7^2*(1.0/2.0)+Iwp3*t9^2*(1.0/2.0),0.0,
-        0.0,0.0,0.0,Iwm2*t15*(1.0/2.0)+Iwm1*t12^2*(1.0/2.0)+Iwm3*t14^2*(1.0/2.0)]).reshape(4,4)
+    M = [I12_2 t6 0.0 0.0; 
+    t6 t2*(I11_1*t2-I13_1*t3)-t3*(I11_3*t2-I13_3*t3) 0.0 0.0;
+    0.0 0.0 Iwp2*t15*(1.0/2.0)+Iwp1*t7^2*(1.0/2.0)+Iwp3*t9^2*(1.0/2.0) 0.0;
+    0.0 0.0 0.0 Iwm2*t15*(1.0/2.0)+Iwm1*t12^2*(1.0/2.0)+Iwm3*t14^2*(1.0/2.0)]
     return M
 end
 
-function acting_forces(I11_1,I11_2,I11_3,I12_1,I12_3,I13_1,I13_2,I13_3,
-        Iwm1,Iwm2,Iwm3,Iwp1,Iwp2,Iwp3,K,b1,b2,bwm,bwp,dth1,dth2,dth3,dth4,
+function acting_forces(I1,Iwm,Iwp,K,b1,b2,bwm,bwp,dth1,dth2,dth3,dth4,
         g,im,ip,k1,k2,lc11,lc12,lc13,m1,theta1,theta2)
     #"""Forces from symbolic Matlab"""
+    I11_1,I11_2,I11_3,I12_1,I12_2,I12_3,I13_1,I13_2,I13_3 = [I1[i] for i=1:9]
+    Iwm1,Iwm2,Iwm3 = [Iwm[i] for i=1:3]
+    Iwp1,Iwp2,Iwp3 = [Iwp[i] for i=1:3]
     t2 = dth2^2
     t3 = dth4^2
     t4 = sin(theta2)
@@ -91,7 +62,7 @@ function acting_forces(I11_1,I11_2,I11_3,I12_1,I12_3,I13_1,I13_2,I13_3,
     t19 = K*im
     t20 = t12^2
     t21 = t6*t12*t13
-    Vv = np.array([[I11_3*t2*(1.0/2.0)+I13_1*t2*(1.0/2.0)-b1*dth1-k1*theta1-
+    Vv = [[I11_3*t2*(1.0/2.0)+I13_1*t2*(1.0/2.0)-b1*dth1-k1*theta1-
         I11_1*t2*t9*(1.0/2.0)-I11_3*t2*t7-I13_1*t2*t7+
         I13_3*t2*t9*(1.0/2.0)+Iwm1*t3*t4*(1.0/2.0)-Iwm3*t3*t4*(1.0/2.0)-
         Iwp1*t4*t5*(1.0/2.0)+Iwp3*t4*t5*(1.0/2.0)-Iwm1*t3*t4*t7+Iwm3*t3*t4*t7+Iwp1*t4*t5*t7-
@@ -110,7 +81,7 @@ function acting_forces(I11_1,I11_2,I11_3,I12_1,I12_3,I13_1,I13_2,I13_3,
         [t18-bwp*dth3-dth3*(dth2*t11*(-Iwp2*t4+Iwp1*t9*(1.0/2.0)-
         Iwp3*t9*(1.0/2.0)+Iwp3*t4*t7+Iwp1*t4*t20)-dth1*(Iwp1-Iwp3)*(t4+t21-t4*t7*2.0))],
         [t19-bwm*dth4+dth4*(dth1*(Iwm1-Iwm3)*(-t4+t21+t4*t7*2.0)-
-        dth2*t11*(-Iwm2*t4-Iwm1*t9*(1.0/2.0)+Iwm3*t9*(1.0/2.0)+Iwm3*t4*t7+Iwm1*t4*t20))]]).reshape(4,1)
+        dth2*t11*(-Iwm2*t4-Iwm1*t9*(1.0/2.0)+Iwm3*t9*(1.0/2.0)+Iwm3*t4*t7+Iwm1*t4*t20))]]
     
     return Vv
 end
@@ -118,26 +89,33 @@ end
 function model_dynamics(x,u,sys)
     #Dynamics equation from Matlab symbolic
 
-    M = mass_matrix(sys.I1[0,0],sys.I1[0,1],sys.I1[0,2],sys.I1[1,0],sys.I1[1,1],sys.I1[1,2] ,sys.I1[2,0],
-            sys.I1[2,1],sys.I1[2,2],sys.Iwm[0],sys.Iwm[1],sys.Iwm[2],sys.Iwp[0],sys.Iwp[1],sys.Iwp[2],x[0,0],x[1,0])
-    V=acting_forces(sys.I1[0,0],sys.I1[0,1],sys.I1[0,2],sys.I1[1,0], sys.I1[1,2],sys.I1[2,0],sys.I1[2,1],
-            sys.I1[2,2],sys.Iwm[0],sys.Iwm[1],sys.Iwm[2],sys.Iwp[0],sys.Iwp[1],sys.Iwp[2],sys.K,sys.b1,sys.b2,sys.bwm,sys.bwp,x[2,0],
-            x[3,0],x[4,0],x[5,0], sys.g,u[0],u[1],sys.k1,sys.k2,sys.lc1[0],sys.lc1[1],sys.lc1[2],sys.m1,x[0,0],x[1,0])
-    dq = np.linalg.solve(M,V)
-    dx = np.concatenate((x[2,0].reshape(1,1),x[3,0].reshape(1,1),dq),axis=0)
+    M = mass_mat(sys.I1,sys.Iwm,sys.Iwp,x[1],x[2])
+    V = acting_forces(sys.I1,sys.Iwm,sys.Iwp,sys.K,sys.b1,sys.b2,sys.bwm,sys.bwp,x[3],
+            x[4],x[5],x[6], sys.g,u[1],u[2],sys.k1,sys.k2,sys.lc1[1],sys.lc1[2],sys.lc1[3],sys.m1,x[1],x[2])
+    dq = M \ V
+    dx::Vector = [x[3],x[4],dq[1],dq[2],dq[3],dq[4]]
     
     return dx
+end
+
+function rk4(params::NamedTuple,x::Vector,u,dt::Float64)
+    # vanilla RK4
+    k1 = dt*model_dynamics(x, u, params)
+    k2 = dt*model_dynamics(x + k1/2, u, params)
+    k3 = dt*model_dynamics(x + k2/2, u, params)
+    k4 = dt*model_dynamics(x + k3, u, params)
+    x + (1/6)*(k1 + 2*k2 + 2*k3 + k4)
 end
 
 nu = 2
 nx = 6
 
 # desired x and g (linearize about these)
-xgoal = [0, 0, 0, 0, 0]
+xgoal = [0.0, 0, 0, 0, 0, 0]
 ugoal = [0, 0]
 
 # initial condition (slightly off of our linearization point)
-x0 = [0, 0, 0, 0, 0, 0] + [1.5, deg2rad(-20), .3, 0, 0, 0]
+x0 = [0.0, 0, 0, 0, 0, 0] + [1.5, deg2rad(-20), .3, 0, 0, 0]
 
 # simulation size 
 dt = 0.1 
@@ -150,12 +128,9 @@ X[1] = x0
 params = (a=5,
 lc1 = [0,0,0.33],
 m1 = 1.3,
-I1 =np.eye(3,3),
-I1[0,0] = 0.18,
-I1[1,1] = 0.18,
-I1[2,2] = 0.01,
-Iwm = 1e-9*np.array([753238.87,394859.64,394859.64]),
-Iwp = 1e-9*np.array([753238.87,394859.64,394859.64]),
+I1 = [0.18, 0, 0, 0, 0.18, 0, 0, 0, 0.01],
+Iwm = [1e-9*753238.87,1e-9*394859.64,1e-9*394859.64],
+Iwp = [1e-9*753238.87,1e-9*394859.64,1e-9*394859.64],
 K = 131e-3,
 k1 = 13.70937911565217391304347826087,
 k2 = 6.0195591156521739130434782608696,
@@ -172,8 +147,8 @@ R = 0.1*diagm(ones(2))
 
 Kinf = zeros(2,6) 
 
-A = FD.jacobian(dx -> rk4(dx, ugoal, dt, params), xgoal)
-B = FD.jacobian(du -> rk4(xgoal, du, dt, params), ugoal)
+A = FD.jacobian(dx -> rk4(params, dx, ugoal, dt), xgoal)
+B = FD.jacobian(du -> rk4(params, xgoal, du, dt), ugoal)
 
 # TODO: solve for the infinite horizon LQR gain Kinf
     # Ricatti 
@@ -200,7 +175,7 @@ B = FD.jacobian(du -> rk4(xgoal, du, dt, params), ugoal)
 # TODO: simulate this controlled system with rk4(params_real, ...)
 for k = 1:N-1 
     u = -Kinf * (X[k] - xgoal)
-    X[k+1] = rk4(params_real, X[k], u, dt)
+    X[k+1] = rk4(params, X[k], u, dt)
 end
 
 visualize!(mvis, LinRange(0, tf, N), X)
