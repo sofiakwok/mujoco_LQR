@@ -341,34 +341,6 @@ X[1] = copy(x0)
 X[1][1:4] = L_mult([cos(θ/2); sin(θ/2)*[1; 0; 0]...])*X[1][1:4]
 X[1][5:7] -= foot_pinned_c(X[1][1:14], robot) # Make sure foot constraint is satisfied at start
 
-X[1] = [0.957826
--0
- 0
- 0
- 0
- 0
-0.287348
--0
- 0
- 0
- 0
- 0
- 0
- 0
- 0
- 0
- 0
- 0
- 0
- 0
- 0
- 0
- 0
- 0
- 0
- 0
- 0]
-
 for k = 1:N - 1
     Δx = state_error(X[k], x0)
 

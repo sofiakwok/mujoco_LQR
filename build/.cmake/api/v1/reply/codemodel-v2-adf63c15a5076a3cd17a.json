@@ -52,9 +52,9 @@
 			[
 				{
 					"directoryIndex" : 1,
-					"id" : "LQR_ball::@145eef247bfb46b6828c",
-					"jsonFile" : "target-LQR_ball-Debug-dafb2076ecd272a9d94c.json",
-					"name" : "LQR_ball",
+					"id" : "LQR_quat::@145eef247bfb46b6828c",
+					"jsonFile" : "target-LQR_quat-Debug-a9c810e325e6841fe09f.json",
+					"name" : "LQR_quat",
 					"projectIndex" : 0
 				}
 			]

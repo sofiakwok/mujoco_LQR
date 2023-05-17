@@ -172,7 +172,7 @@ MatrixXd L_mult(VectorXd q)
     MatrixXd subset(3, 3);
     subset = qs*MatrixXd::Identity(3, 3) + skew(qv);
     MatrixXd stack(4, 4);
-    stack.row(0) << q(0), q(1), q(2), q(3);
+    stack.row(0) << q(0), -q(1), -q(2), -q(3);
     stack.col(0).tail(3) << qv(0), qv(1), qv(2);
     stack.block(1, 1, 3, 3) = subset;
     return stack;

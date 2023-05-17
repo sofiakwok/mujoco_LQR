@@ -111,17 +111,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named LQR_ball
+# Target rules for targets named LQR_quat
 
 # Build rule for target.
-LQR_ball: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 LQR_ball
-.PHONY : LQR_ball
+LQR_quat: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 LQR_quat
+.PHONY : LQR_quat
 
 # fast build rule for target.
-LQR_ball/fast:
-	$(MAKE) -f src/CMakeFiles/LQR_ball.dir/build.make src/CMakeFiles/LQR_ball.dir/build
-.PHONY : LQR_ball/fast
+LQR_quat/fast:
+	$(MAKE) -f src/CMakeFiles/LQR_quat.dir/build.make src/CMakeFiles/LQR_quat.dir/build
+.PHONY : LQR_quat/fast
 
 # Help Target
 help:
@@ -131,7 +131,7 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... LQR_ball"
+	@echo "... LQR_quat"
 .PHONY : help
 
 

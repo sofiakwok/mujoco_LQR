@@ -2,4 +2,4 @@
 /home/sofia/mujoco_LQR/build/CMakeFiles/edit_cache.dir
 /home/sofia/mujoco_LQR/build/src/CMakeFiles/rebuild_cache.dir
 /home/sofia/mujoco_LQR/build/src/CMakeFiles/edit_cache.dir
-/home/sofia/mujoco_LQR/build/src/CMakeFiles/LQR_ball.dir
+/home/sofia/mujoco_LQR/build/src/CMakeFiles/LQR_quat.dir
