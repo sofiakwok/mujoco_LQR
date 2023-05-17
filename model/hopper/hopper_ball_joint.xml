@@ -1,6 +1,6 @@
 <mujoco model="hopper_rev10">
   <compiler inertiafromgeom='false' angle="radian"/>
-  <option integrator="RK4" timestep="0.001"/>
+  <option integrator="RK4" timestep="0.0005"/>
   <size njmax="500" nconmax="100"/>
   <!-- <default/> -->
   <asset>
@@ -96,10 +96,12 @@
     <motor joint='Joint 2' name='q2' gear="1 0 0 0 0 0" forcelimited="false" ctrllimited="false"/>
 	</actuator>
   <actuator>
-    <motor joint='joint_rw0' name='rw0' gear="1 0 0 0 0 0" forcelimited="true" forcerange="-11.24 11.24" ctrllimited="false"/>
+    <!--<motor joint='joint_rw0' name='rw0' gear="1 0 0 0 0 0" forcelimited="true" forcerange="-11.24 11.24" ctrllimited="false"/>-->
+    <motor joint='joint_rw0' name='rw0' gear="1 0 0 0 0 0" forcelimited="false" ctrllimited="false"/>
 	</actuator>
   <actuator>
-    <motor joint='joint_rw1' name='rw1' gear="1 0 0 0 0 0" forcelimited="true" forcerange="-11.24 11.24" ctrllimited="false"/>
+    <!--<motor joint='joint_rw1' name='rw1' gear="1 0 0 0 0 0" forcelimited="true" forcerange="-11.24 11.24" ctrllimited="false"/>-->
+    <motor joint='joint_rw1' name='rw1' gear="1 0 0 0 0 0" forcelimited="false" ctrllimited="false"/>
 	</actuator>
   <actuator>
     <motor joint='joint_rwz' name='rwz' gear="1 0 0 0 0 0" forcelimited="true" forcerange="-4 4" ctrllimited="false"/>

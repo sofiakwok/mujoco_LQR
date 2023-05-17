@@ -1,5 +1,6 @@
 #include <stdbool.h> //for bool
 #include <iostream>
+#include <fstream> //for writing data
 #include <unistd.h> //for usleep
 #include <math.h>
 #include <cmath>
@@ -14,11 +15,12 @@
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
 #include <chrono>
+#include <vector>
 
 using namespace std;
 using namespace Eigen;
 
-char filename[] = "../model/hopper/hopper_ball_joint.xml";
+char filename[] = "../model/hopper/hopper_rev10_mjcf_fixed.xml";
 
 // MuJoCo data structures
 mjModel* m = NULL;                  // MuJoCo model
@@ -138,8 +140,8 @@ MatrixXd LQR_controller(const mjModel* m, mjData* d)
 MatrixXd ref_pos()
 {
     Matrix<double, 27, 1> x0;
-    //x0 << 0.999948475958916, 0.0006138456069342759, -0.010132552541783801, -0.0, 0.00017582778541125332, -0.0003617632294766306, 0.2946863026769917, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
-    x0 << 1, 0, 0, 0, 0, 0, 0.3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    x0 << 0.999948475958916, 0.0006138456069342759, -0.010132552541783801, -0.0, 0.00017582778541125332, -0.0003617632294766306, 0.2946863026769917, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+    //x0 << 1, 0, 0, 0, 0, 0, 0.3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
     return x0;
 }
 
@@ -231,9 +233,8 @@ void mycontroller(const mjModel* m, mjData* d)
         //gives current body frame orientation as a quaternion in Cartesian coordinates
         mjtNum com_quat[4];
         mjtNum com_pos[3];
-        mju_copy(com_quat, d->qpos + m->jnt_qposadr[bodyid], 4);
-        bodyid = mj_name2id(m, mjOBJ_SITE, "imu");
-        mju_copy(com_pos, d->site_xpos + 3*bodyid, 3);
+        mju_copy(com_quat, d->qpos + m->jnt_qposadr[bodyid] + 3, 4);
+        mju_copy(com_pos, d->qpos + m->jnt_qposadr[bodyid], 3);
 
         int link0 = mj_name2id(m, mjOBJ_JOINT, "Joint 0");
         mjtNum link_0;
@@ -283,15 +284,18 @@ void mycontroller(const mjModel* m, mjData* d)
 
         Matrix<double, 26, 1> delta_x;
         delta_x = state_error(x, x0);
+        if (counter == 0){
+            cout << "delta_x: " << delta_x << endl;
+        }
 
-        cout << "x: " << x.transpose() << endl;
+        //cout << "x: " << x.transpose() << endl;
         if (counter == 0){
             cout << "x: " << x << endl;
         }
 
         Matrix<double, 3, 1> ctrl;
         ctrl = -K * delta_x;
-        //cout << "ctrl: " << ctrl << endl;
+        cout << "ctrl: " << ctrl << endl;
         if (counter == 0){
             cout << "ctrl: " << ctrl << endl;
         }
@@ -346,15 +350,14 @@ int main(int argc, const char** argv)
     
     //change first 7 values of d to change starting position of hopper
     //changing xyz position
-    /*
-    d->qpos[0] = 0.3*sin(theta);
-    d->qpos[1] = 0;//0.3*sin(theta);
-    d->qpos[2] = 0.3*cos(theta);
+    d->qpos[0] = 0.00017582778541125332;
+    d->qpos[1] = -0.0003617632294766306;
+    d->qpos[2] = 0.2946863026769917;
     //changing quaternion 
-    d->qpos[3] = cos(theta/2);
-    d->qpos[4] = -sin(theta/2);
-    d->qpos[5] = 0;
-    d->qpos[6] = 0;*/
+    d->qpos[3] = 0.999948475958916;
+    d->qpos[4] = 0.0006138456069342759;
+    d->qpos[5] = -0.010132552541783801;
+    d->qpos[6] = -0.0;
 
     // init GLFW
     if( !glfwInit() )
@@ -425,6 +428,35 @@ int main(int argc, const char** argv)
         glfwPollEvents();
 
     }
+
+    /*std::ofstream myfile;
+    myfile.open ("rwdata.csv");
+    for (int i = 0; i < rw_x.size(); i++){
+        myfile << to_string(rw_x[i]) + "," + to_string(rw_y[i]) + ", " + to_string(rw_z[i]) + "\n";
+    }
+    myfile.close();
+
+    std::ofstream ctrlfile;
+    ctrlfile.open ("ctrldata.csv");
+    for (int i = 0; i < ctrl_rwx.size(); i++){
+        ctrlfile << to_string(ctrl_rwx[i]) + "," + to_string(ctrl_rwy[i]) + ", " + to_string(ctrl_rwz[i]) + "\n";
+    }
+    ctrlfile.close();
+
+    std::ofstream anglefile;
+    anglefile.open ("angles.csv");
+    for (int i = 0; i < x_theta.size(); i++){
+        anglefile << to_string(x_theta[i]) + "," + to_string(y_theta[i]) + ", " + to_string(z_theta[i]) + "\n";
+    }
+    anglefile.close();
+
+    std::ofstream dot_angle;
+    dot_angle.open ("dotangles.csv");
+    for (int i = 0; i < dot_thetax.size(); i++){
+        dot_angle << to_string(dot_thetax[i]) + "," + to_string(dot_thetay[i]) + ", " + to_string(dot_thetaz[i]) + "\n";
+    }
+    dot_angle.close();
+    */
 
     // free visualization storage
     mjv_freeScene(&scn);

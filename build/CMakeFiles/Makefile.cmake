@@ -54,5 +54,5 @@ set(CMAKE_MAKEFILE_PRODUCTS
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
-  "src/CMakeFiles/LQR_quat.dir/DependInfo.cmake"
+  "src/CMakeFiles/LQR_ball.dir/DependInfo.cmake"
   )

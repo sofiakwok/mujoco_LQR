@@ -1,12 +1,12 @@
 [
 {
   "directory": "/home/sofia/mujoco_LQR/build/src",
-  "command": "/usr/bin/c++   -I/home/sofia/mujoco_LQR/include -I/home/sofia/mujoco_LQR/src -isystem /usr/include/eigen3  -g   -o CMakeFiles/LQR_quat.dir/kalman.cpp.o -c /home/sofia/mujoco_LQR/src/kalman.cpp",
+  "command": "/usr/bin/c++   -I/home/sofia/mujoco_LQR/include -I/home/sofia/mujoco_LQR/src -isystem /usr/include/eigen3  -g   -o CMakeFiles/LQR_ball.dir/kalman.cpp.o -c /home/sofia/mujoco_LQR/src/kalman.cpp",
   "file": "/home/sofia/mujoco_LQR/src/kalman.cpp"
 },
 {
   "directory": "/home/sofia/mujoco_LQR/build/src",
-  "command": "/usr/bin/c++   -I/home/sofia/mujoco_LQR/include -I/home/sofia/mujoco_LQR/src -isystem /usr/include/eigen3  -g   -o CMakeFiles/LQR_quat.dir/LQR_quat.cc.o -c /home/sofia/mujoco_LQR/src/LQR_quat.cc",
-  "file": "/home/sofia/mujoco_LQR/src/LQR_quat.cc"
+  "command": "/usr/bin/c++   -I/home/sofia/mujoco_LQR/include -I/home/sofia/mujoco_LQR/src -isystem /usr/include/eigen3  -g   -o CMakeFiles/LQR_ball.dir/LQR_ball.cc.o -c /home/sofia/mujoco_LQR/src/LQR_ball.cc",
+  "file": "/home/sofia/mujoco_LQR/src/LQR_ball.cc"
 }
 ]
